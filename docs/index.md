@@ -24,10 +24,10 @@
     * [1.6 Model Development](#1.6)
         * [1.6.1 Premodelling Data Description](#1.6.1)
         * [1.6.2 K-Means Clustering](#1.6.2)
-        * [1.6.3 Affinity Propagation Clustering](#1.6.3)
-        * [1.6.4 Mean Shift Clustering](#1.6.4)
-        * [1.6.5 Spectral Clustering](#1.6.5)
-        * [1.6.6 Agglomerative Clustering](#1.6.6)
+        * [1.6.3 Bisecting K-Means Clustering](#1.6.3)
+        * [1.6.4 Gaussian Mixture Model Clustering](#1.6.4)
+        * [1.6.5 Agglomerative Clustering](#1.6.5)
+        * [1.6.6 Ward Hierarchical Clustering](#1.6.6)
     * [1.7 Consolidated Findings](#1.7)   
 * [**2. Summary**](#Summary)   
 * [**3. References**](#References)
@@ -105,6 +105,12 @@ The metadata variables for the study are:
 
 ```python
 ##################################
+# Setting the Python Environment
+##################################
+import os
+os.environ["OMP_NUM_THREADS"] = '1'
+
+##################################
 # Loading Python Libraries
 ##################################
 import numpy as np
@@ -115,17 +121,12 @@ import itertools
 %matplotlib inline
 
 from operator import add,mul,truediv
-from sklearn.experimental import enable_iterative_imputer
-from sklearn.impute import IterativeImputer
-from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PowerTransformer, StandardScaler
 from scipy import stats
 
-from sklearn.linear_model import RidgeCV, LassoCV, ElasticNetCV
-from sklearn.metrics import r2_score,mean_squared_error,mean_absolute_error
-from sklearn.model_selection import train_test_split, LeaveOneOut
-from sklearn.preprocessing import PolynomialFeatures 
-from sklearn.pipeline import Pipeline
+from sklearn.cluster import KMeans, AffinityPropagation, MeanShift, SpectralClustering, AgglomerativeClustering, Birch, BisectingKMeans
+from sklearn.mixture import GaussianMixture
+from sklearn.metrics import silhouette_score
 ```
 
 
@@ -4056,7 +4057,6 @@ display(cancer_death_rate_preprocessed_numeric_summary.sort_values(by=['Correlat
 ```python
 ##################################
 # Consolidating relevant numeric columns
-# and encoded categorical columns
 # after hypothesis testing
 ##################################
 cancer_death_rate_premodelling = cancer_death_rate_preprocessed.drop(['GEOLAT','GEOLON'], axis=1)
@@ -4065,7 +4065,7 @@ cancer_death_rate_premodelling = cancer_death_rate_preprocessed.drop(['GEOLAT','
 
 ```python
 ##################################
-# Performing a general exploration of the filtered dataset
+# Performing a general exploration of the premodelling dataset
 ##################################
 print('Dataset Dimensions: ')
 display(cancer_death_rate_premodelling.shape)
@@ -4246,19 +4246,1617 @@ plt.show()
     
 
 
+
+```python
+##################################
+# Preparing the clustering dataset
+##################################
+cancer_death_rate_premodelling_clustering = cancer_death_rate_premodelling.drop(['SMPREV','OWPREV','ACSHAR'], axis=1)
+cancer_death_rate_premodelling_clustering.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PROCAN</th>
+      <th>BRECAN</th>
+      <th>CERCAN</th>
+      <th>STOCAN</th>
+      <th>ESOCAN</th>
+      <th>PANCAN</th>
+      <th>LUNCAN</th>
+      <th>COLCAN</th>
+      <th>LIVCAN</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-0.6922</td>
+      <td>-0.4550</td>
+      <td>-0.1771</td>
+      <td>2.0964</td>
+      <td>0.9425</td>
+      <td>-1.4794</td>
+      <td>-0.6095</td>
+      <td>-0.9258</td>
+      <td>1.4059</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-0.0867</td>
+      <td>-1.3608</td>
+      <td>-1.1020</td>
+      <td>0.3084</td>
+      <td>-1.4329</td>
+      <td>0.2506</td>
+      <td>0.8754</td>
+      <td>-0.7177</td>
+      <td>0.8924</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-1.0261</td>
+      <td>-0.8704</td>
+      <td>-0.8184</td>
+      <td>-1.2331</td>
+      <td>-1.8001</td>
+      <td>-0.6858</td>
+      <td>-0.9625</td>
+      <td>-1.0428</td>
+      <td>-1.1914</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.5801</td>
+      <td>0.3703</td>
+      <td>1.0686</td>
+      <td>-0.0427</td>
+      <td>1.2150</td>
+      <td>-1.1052</td>
+      <td>-0.2718</td>
+      <td>-0.5826</td>
+      <td>-0.8379</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>2.1397</td>
+      <td>1.3384</td>
+      <td>0.2846</td>
+      <td>0.3752</td>
+      <td>-0.1795</td>
+      <td>0.1509</td>
+      <td>-1.1314</td>
+      <td>0.7189</td>
+      <td>-0.6376</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
 ### 1.6.2 K-Means Clustering <a class="anchor" id="1.6.2"></a>
 
 
-### 1.6.3 Affinity Propagation Clustering <a class="anchor" id="1.6.3"></a>
+
+```python
+##################################
+# Fitting the K-Means Clustering algorithm
+# using a range of K values
+##################################
+kmeans_cluster_list = list()
+kmeans_cluster_inertia = list()
+kmeans_cluster_silhouette_score = list()
+for cluster_count in range(2,10):
+    km = KMeans(n_clusters=cluster_count, 
+                random_state=88888888,
+                n_init='auto',
+                init='k-means++')
+    km = km.fit(cancer_death_rate_premodelling_clustering)
+    kmeans_cluster_list.append(cluster_count)
+    kmeans_cluster_inertia.append(km.inertia_)
+    kmeans_cluster_silhouette_score.append(silhouette_score(cancer_death_rate_premodelling_clustering, 
+                                                            km.predict(cancer_death_rate_premodelling_clustering), 
+                                                            metric='euclidean'))
+```
 
 
-### 1.6.4 Mean Shift Clustering <a class="anchor" id="1.6.4"></a>
+```python
+##################################
+# Consolidating the model performance metrics
+# for the K-Means Clustering algorithm
+# using a range of K values
+##################################
+kmeans_clustering_evaluation_summary = pd.DataFrame(zip(kmeans_cluster_list,
+                                                        kmeans_cluster_inertia,
+                                                        kmeans_cluster_silhouette_score), 
+                                                    columns=['KMeans.Cluster.Count',
+                                                             'KMeans.Cluster.Inertia',
+                                                             'KMeans.Cluster.Silhouette.Score'])
+kmeans_clustering_evaluation_summary
+```
 
 
-### 1.6.5 Spectral Clustering <a class="anchor" id="1.6.5"></a>
 
 
-### 1.6.6 Agglomerative Clustering <a class="anchor" id="1.6.6"></a>
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>KMeans.Cluster.Count</th>
+      <th>KMeans.Cluster.Inertia</th>
+      <th>KMeans.Cluster.Silhouette.Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2</td>
+      <td>1130.4677</td>
+      <td>0.2285</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>3</td>
+      <td>981.2268</td>
+      <td>0.2010</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>4</td>
+      <td>878.2950</td>
+      <td>0.1965</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>5</td>
+      <td>793.1428</td>
+      <td>0.1975</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>6</td>
+      <td>731.4260</td>
+      <td>0.1955</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>7</td>
+      <td>683.4748</td>
+      <td>0.1831</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>8</td>
+      <td>648.7358</td>
+      <td>0.1776</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>9</td>
+      <td>594.4504</td>
+      <td>0.1860</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+###################################
+# Plotting the Inertia performance
+# by cluster count using a range of K values
+# for the K-Means Clustering algorithm
+##################################
+kmeans_cluster_count_values = np.array(kmeans_clustering_evaluation_summary['KMeans.Cluster.Count'].values)
+kmeans_inertia_values = np.array(kmeans_clustering_evaluation_summary['KMeans.Cluster.Inertia'].values)
+plt.figure(figsize=(10, 6))
+plt.plot(kmeans_cluster_count_values, kmeans_inertia_values, marker='o',ls='-')
+plt.grid(True)
+plt.ylim(500,1500)
+plt.title("K-Means Clustering Algorithm: Cluster Count by Inertia")
+plt.xlabel("Cluster")
+plt.ylabel("Inertia")
+plt.show()
+```
+
+
+    
+![png](output_156_0.png)
+    
+
+
+
+```python
+###################################
+# Plotting the Silhouette Score performance
+# by cluster count using a range of K values
+# for the K-Means Clustering algorithm
+##################################
+kmeans_cluster_count_values = np.array(kmeans_clustering_evaluation_summary['KMeans.Cluster.Count'].values)
+kmeans_silhouette_score_values = np.array(kmeans_clustering_evaluation_summary['KMeans.Cluster.Silhouette.Score'].values)
+plt.figure(figsize=(10, 6))
+plt.plot(kmeans_cluster_count_values, kmeans_silhouette_score_values, marker='o',ls='-')
+plt.grid(True)
+plt.ylim(0,1)
+plt.title("K-Means Clustering Algorithm: Cluster Count by Silhouette Score")
+plt.xlabel("Cluster")
+plt.ylabel("Silhouette Score")
+plt.show()
+```
+
+
+    
+![png](output_157_0.png)
+    
+
+
+
+```python
+###################################
+# Formulating the final K-Means Clustering model
+# using the optimal cluster count
+##################################
+kmeans_clustering = KMeans(n_clusters=2, 
+                           random_state=88888888,
+                           n_init='auto',
+                           init='k-means++')
+kmeans_clustering = kmeans_clustering.fit(cancer_death_rate_premodelling_clustering)
+
+###################################
+# Gathering the Inertia and Silhouette Score
+# for the final K-Means Clustering model
+##################################
+kmeans_clustering_inertia = kmeans_clustering.inertia_
+kmeans_clustering_silhouette_score = silhouette_score(cancer_death_rate_premodelling_clustering, 
+                                                      kmeans_clustering.predict(cancer_death_rate_premodelling_clustering), 
+                                                      metric='euclidean')
+```
+
+
+```python
+##################################
+# Plotting the cluster labels
+# for the final K-Means Clustering model
+##################################
+cancer_death_rate_kmeans_clustering = cancer_death_rate_premodelling_clustering.copy()
+cancer_death_rate_kmeans_clustering['KMEANS_CLUSTER'] = kmeans_clustering.predict(cancer_death_rate_kmeans_clustering)
+cancer_death_rate_kmeans_clustering.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PROCAN</th>
+      <th>BRECAN</th>
+      <th>CERCAN</th>
+      <th>STOCAN</th>
+      <th>ESOCAN</th>
+      <th>PANCAN</th>
+      <th>LUNCAN</th>
+      <th>COLCAN</th>
+      <th>LIVCAN</th>
+      <th>KMEANS_CLUSTER</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-0.6922</td>
+      <td>-0.4550</td>
+      <td>-0.1771</td>
+      <td>2.0964</td>
+      <td>0.9425</td>
+      <td>-1.4794</td>
+      <td>-0.6095</td>
+      <td>-0.9258</td>
+      <td>1.4059</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-0.0867</td>
+      <td>-1.3608</td>
+      <td>-1.1020</td>
+      <td>0.3084</td>
+      <td>-1.4329</td>
+      <td>0.2506</td>
+      <td>0.8754</td>
+      <td>-0.7177</td>
+      <td>0.8924</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-1.0261</td>
+      <td>-0.8704</td>
+      <td>-0.8184</td>
+      <td>-1.2331</td>
+      <td>-1.8001</td>
+      <td>-0.6858</td>
+      <td>-0.9625</td>
+      <td>-1.0428</td>
+      <td>-1.1914</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.5801</td>
+      <td>0.3703</td>
+      <td>1.0686</td>
+      <td>-0.0427</td>
+      <td>1.2150</td>
+      <td>-1.1052</td>
+      <td>-0.2718</td>
+      <td>-0.5826</td>
+      <td>-0.8379</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>2.1397</td>
+      <td>1.3384</td>
+      <td>0.2846</td>
+      <td>0.3752</td>
+      <td>-0.1795</td>
+      <td>0.1509</td>
+      <td>-1.1314</td>
+      <td>0.7189</td>
+      <td>-0.6376</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+##################################
+# Gathering the pairplot for all variables
+# labelled using the final K-Means Clustering model
+##################################
+sns.pairplot(cancer_death_rate_kmeans_clustering,
+             kind='reg',
+             hue='KMEANS_CLUSTER');
+plt.show()
+```
+
+
+    
+![png](output_160_0.png)
+    
+
+
+### 1.6.3 Bisecting K-Means Clustering <a class="anchor" id="1.6.3"></a>
+
+
+```python
+##################################
+# Fitting the Bisecting K-Means Clustering algorithm
+# using a range of K values
+##################################
+bisecting_kmeans_cluster_list = list()
+bisecting_kmeans_cluster_inertia = list()
+bisecting_kmeans_cluster_silhouette_score = list()
+for cluster_count in range(2,10):
+    bk = BisectingKMeans(n_clusters=cluster_count, 
+                         random_state=88888888,
+                         n_init=1,
+                         init='k-means++')
+    bk = bk.fit(cancer_death_rate_premodelling_clustering)
+    bisecting_kmeans_cluster_list.append(cluster_count)
+    bisecting_kmeans_cluster_inertia.append(bk.inertia_)
+    bisecting_kmeans_cluster_silhouette_score.append(silhouette_score(cancer_death_rate_premodelling_clustering, 
+                                                                      bk.predict(cancer_death_rate_premodelling_clustering), 
+                                                                      metric='euclidean'))
+```
+
+
+```python
+##################################
+# Consolidating the model performance metrics
+# for the Bisecting K-Means Clustering algorithm
+# using a range of K values
+##################################
+bisecting_kmeans_clustering_evaluation_summary = pd.DataFrame(zip(bisecting_kmeans_cluster_list,
+                                                                  bisecting_kmeans_cluster_inertia,
+                                                                  bisecting_kmeans_cluster_silhouette_score),
+                                                              columns=['Bisecting.KMeans.Cluster.Count',
+                                                                       'Bisecting.KMeans.Cluster.Inertia',
+                                                                       'Bisecting.KMeans.Cluster.Silhouette.Score'])
+bisecting_kmeans_clustering_evaluation_summary
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Bisecting.KMeans.Cluster.Count</th>
+      <th>Bisecting.KMeans.Cluster.Inertia</th>
+      <th>Bisecting.KMeans.Cluster.Silhouette.Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2</td>
+      <td>1130.4677</td>
+      <td>0.2285</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>3</td>
+      <td>985.6366</td>
+      <td>0.2125</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>4</td>
+      <td>874.2247</td>
+      <td>0.1844</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>5</td>
+      <td>815.8860</td>
+      <td>0.1652</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>6</td>
+      <td>762.4217</td>
+      <td>0.1771</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>7</td>
+      <td>718.2347</td>
+      <td>0.1882</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>8</td>
+      <td>678.8433</td>
+      <td>0.1585</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>9</td>
+      <td>636.1460</td>
+      <td>0.1679</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+###################################
+# Plotting the Inertia performance
+# by cluster count using a range of K values
+# for the Bisecting K-Means Clustering algorithm
+##################################
+bisecting_kmeans_cluster_count_values = np.array(bisecting_kmeans_clustering_evaluation_summary['Bisecting.KMeans.Cluster.Count'].values)
+bisecting_kmeans_inertia_values = np.array(bisecting_kmeans_clustering_evaluation_summary['Bisecting.KMeans.Cluster.Inertia'].values)
+plt.figure(figsize=(10, 6))
+plt.plot(bisecting_kmeans_cluster_count_values, bisecting_kmeans_inertia_values, marker='o',ls='-')
+plt.grid(True)
+plt.ylim(500,1500)
+plt.title("Bisecting K-Means Clustering Algorithm: Cluster Count by Inertia")
+plt.xlabel("Cluster")
+plt.ylabel("Inertia")
+plt.show()
+```
+
+
+    
+![png](output_164_0.png)
+    
+
+
+
+```python
+###################################
+# Plotting the Silhouette Score performance
+# by cluster count using a range of K values
+# for the Bisecting K-Means Clustering algorithm
+##################################
+bisecting_kmeans_cluster_count_values = np.array(bisecting_kmeans_clustering_evaluation_summary['Bisecting.KMeans.Cluster.Count'].values)
+bisecting_kmeans_silhouette_score_values = np.array(bisecting_kmeans_clustering_evaluation_summary['Bisecting.KMeans.Cluster.Silhouette.Score'].values)
+plt.figure(figsize=(10, 6))
+plt.plot(bisecting_kmeans_cluster_count_values, bisecting_kmeans_silhouette_score_values, marker='o',ls='-')
+plt.grid(True)
+plt.ylim(0,1)
+plt.title("Bisecting K-Means Clustering Algorithm: Cluster Count by Silhouette Score")
+plt.xlabel("Cluster")
+plt.ylabel("Silhouette Score")
+plt.show()
+```
+
+
+    
+![png](output_165_0.png)
+    
+
+
+
+```python
+###################################
+# Formulating the final Bisecting K-Means Clustering model
+# using the optimal cluster count
+##################################
+bisecting_kmeans_clustering = BisectingKMeans(n_clusters=2, 
+                                              random_state=88888888,
+                                              n_init=1,
+                                              init='k-means++')
+bisecting_kmeans_clustering = bisecting_kmeans_clustering.fit(cancer_death_rate_premodelling_clustering)
+
+###################################
+# Gathering the Inertia and Silhouette Score
+# for the final Bisecting K-Means Clustering model
+##################################
+bisecting_kmeans_clustering_inertia = bisecting_kmeans_clustering.inertia_
+bisecting_kmeans_clustering_silhouette_score = silhouette_score(cancer_death_rate_premodelling_clustering, 
+                                                                bisecting_kmeans_clustering.predict(cancer_death_rate_premodelling_clustering), 
+                                                                metric='euclidean')
+```
+
+
+```python
+##################################
+# Plotting the cluster labels
+# for the final Bisecting K-Means Clustering model
+##################################
+cancer_death_rate_bisecting_kmeans_clustering = cancer_death_rate_premodelling_clustering.copy()
+cancer_death_rate_bisecting_kmeans_clustering['BISECTING_KMEANS_CLUSTER'] = bisecting_kmeans_clustering.predict(cancer_death_rate_bisecting_kmeans_clustering)
+cancer_death_rate_bisecting_kmeans_clustering.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PROCAN</th>
+      <th>BRECAN</th>
+      <th>CERCAN</th>
+      <th>STOCAN</th>
+      <th>ESOCAN</th>
+      <th>PANCAN</th>
+      <th>LUNCAN</th>
+      <th>COLCAN</th>
+      <th>LIVCAN</th>
+      <th>BISECTING_KMEANS_CLUSTER</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-0.6922</td>
+      <td>-0.4550</td>
+      <td>-0.1771</td>
+      <td>2.0964</td>
+      <td>0.9425</td>
+      <td>-1.4794</td>
+      <td>-0.6095</td>
+      <td>-0.9258</td>
+      <td>1.4059</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-0.0867</td>
+      <td>-1.3608</td>
+      <td>-1.1020</td>
+      <td>0.3084</td>
+      <td>-1.4329</td>
+      <td>0.2506</td>
+      <td>0.8754</td>
+      <td>-0.7177</td>
+      <td>0.8924</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-1.0261</td>
+      <td>-0.8704</td>
+      <td>-0.8184</td>
+      <td>-1.2331</td>
+      <td>-1.8001</td>
+      <td>-0.6858</td>
+      <td>-0.9625</td>
+      <td>-1.0428</td>
+      <td>-1.1914</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.5801</td>
+      <td>0.3703</td>
+      <td>1.0686</td>
+      <td>-0.0427</td>
+      <td>1.2150</td>
+      <td>-1.1052</td>
+      <td>-0.2718</td>
+      <td>-0.5826</td>
+      <td>-0.8379</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>2.1397</td>
+      <td>1.3384</td>
+      <td>0.2846</td>
+      <td>0.3752</td>
+      <td>-0.1795</td>
+      <td>0.1509</td>
+      <td>-1.1314</td>
+      <td>0.7189</td>
+      <td>-0.6376</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+##################################
+# Gathering the pairplot for all variables
+# labelled using the final Bisecting K-Means Clustering model
+##################################
+sns.pairplot(cancer_death_rate_bisecting_kmeans_clustering,
+             kind='reg',
+             hue='BISECTING_KMEANS_CLUSTER');
+plt.show()
+```
+
+
+    
+![png](output_168_0.png)
+    
+
+
+### 1.6.4 Gaussian Mixture Model Clustering <a class="anchor" id="1.6.4"></a>
+
+
+```python
+##################################
+# Fitting the GMM Clustering algorithm
+# using a range of K values
+##################################
+gaussian_mixture_cluster_list = list()
+gaussian_mixture_cluster_silhouette_score = list()
+for cluster_count in range(2,10):
+    gm = GaussianMixture(n_components=cluster_count,
+                         init_params='k-means++',
+                        random_state=88888888)
+    gm = gm.fit(cancer_death_rate_premodelling_clustering)
+    gaussian_mixture_cluster_list.append(cluster_count)
+    gaussian_mixture_cluster_silhouette_score.append(silhouette_score(cancer_death_rate_premodelling_clustering, 
+                                                                      gm.predict(cancer_death_rate_premodelling_clustering), 
+                                                                      metric='euclidean'))
+```
+
+
+```python
+##################################
+# Consolidating the model performance metrics
+# for the GMM Clustering algorithm
+# using a range of K values
+##################################
+gaussian_mixture_clustering_evaluation_summary = pd.DataFrame(zip(gaussian_mixture_cluster_list,
+                                                                  gaussian_mixture_cluster_silhouette_score), 
+                                                              columns=['GMM.Cluster.Count',
+                                                                       'GMM.Cluster.Silhouette.Score'])
+gaussian_mixture_clustering_evaluation_summary
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>GMM.Cluster.Count</th>
+      <th>GMM.Cluster.Silhouette.Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2</td>
+      <td>0.1745</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>3</td>
+      <td>0.1136</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>4</td>
+      <td>0.1233</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>5</td>
+      <td>0.1094</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>6</td>
+      <td>0.1162</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>7</td>
+      <td>0.1141</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>8</td>
+      <td>0.0806</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>9</td>
+      <td>0.0863</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+###################################
+# Plotting the Silhouette Score performance
+# by cluster count using a range of K values
+# for the GMM Clustering algorithm
+##################################
+gaussian_mixture_cluster_count_values = np.array(gaussian_mixture_clustering_evaluation_summary['GMM.Cluster.Count'].values)
+gaussian_mixture_silhouette_score_values = np.array(gaussian_mixture_clustering_evaluation_summary['GMM.Cluster.Silhouette.Score'].values)
+plt.figure(figsize=(10, 6))
+plt.plot(gaussian_mixture_cluster_count_values, gaussian_mixture_silhouette_score_values, marker='o',ls='-')
+plt.grid(True)
+plt.ylim(0,1)
+plt.title("GMM Clustering Algorithm: Cluster Count by Silhouette Score")
+plt.xlabel("Cluster")
+plt.ylabel("Silhouette Score")
+plt.show()
+```
+
+
+    
+![png](output_172_0.png)
+    
+
+
+
+```python
+###################################
+# Formulating the final GMM Clustering model
+# using the optimal cluster count
+##################################
+gaussian_mixture_clustering = GaussianMixture(n_components=2,
+                                              init_params='k-means++',
+                                              random_state=88888888)
+gaussian_mixture_clustering = gaussian_mixture_clustering.fit(cancer_death_rate_premodelling_clustering)
+
+###################################
+# Gathering the Silhouette Score
+# for the final GMM Clustering model
+##################################
+gaussian_mixture_clustering_silhouette_score = silhouette_score(cancer_death_rate_premodelling_clustering, 
+                                                                      gaussian_mixture_clustering.predict(cancer_death_rate_premodelling_clustering), 
+                                                                      metric='euclidean')
+```
+
+
+```python
+##################################
+# Plotting the cluster labels
+# for the final GMM Clustering model
+##################################
+cancer_death_rate_gaussian_mixture_clustering = cancer_death_rate_premodelling_clustering.copy()
+cancer_death_rate_gaussian_mixture_clustering['GMM_CLUSTER'] = gaussian_mixture_clustering.predict(cancer_death_rate_gaussian_mixture_clustering)
+cancer_death_rate_gaussian_mixture_clustering.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PROCAN</th>
+      <th>BRECAN</th>
+      <th>CERCAN</th>
+      <th>STOCAN</th>
+      <th>ESOCAN</th>
+      <th>PANCAN</th>
+      <th>LUNCAN</th>
+      <th>COLCAN</th>
+      <th>LIVCAN</th>
+      <th>GMM_CLUSTER</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-0.6922</td>
+      <td>-0.4550</td>
+      <td>-0.1771</td>
+      <td>2.0964</td>
+      <td>0.9425</td>
+      <td>-1.4794</td>
+      <td>-0.6095</td>
+      <td>-0.9258</td>
+      <td>1.4059</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-0.0867</td>
+      <td>-1.3608</td>
+      <td>-1.1020</td>
+      <td>0.3084</td>
+      <td>-1.4329</td>
+      <td>0.2506</td>
+      <td>0.8754</td>
+      <td>-0.7177</td>
+      <td>0.8924</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-1.0261</td>
+      <td>-0.8704</td>
+      <td>-0.8184</td>
+      <td>-1.2331</td>
+      <td>-1.8001</td>
+      <td>-0.6858</td>
+      <td>-0.9625</td>
+      <td>-1.0428</td>
+      <td>-1.1914</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.5801</td>
+      <td>0.3703</td>
+      <td>1.0686</td>
+      <td>-0.0427</td>
+      <td>1.2150</td>
+      <td>-1.1052</td>
+      <td>-0.2718</td>
+      <td>-0.5826</td>
+      <td>-0.8379</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>2.1397</td>
+      <td>1.3384</td>
+      <td>0.2846</td>
+      <td>0.3752</td>
+      <td>-0.1795</td>
+      <td>0.1509</td>
+      <td>-1.1314</td>
+      <td>0.7189</td>
+      <td>-0.6376</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+##################################
+# Gathering the pairplot for all variables
+# labelled using the final GMM Clustering model
+##################################
+sns.pairplot(cancer_death_rate_gaussian_mixture_clustering,
+             kind='reg',
+             hue='GMM_CLUSTER');
+plt.show()
+```
+
+
+    
+![png](output_175_0.png)
+    
+
+
+### 1.6.5 Agglomerative Clustering <a class="anchor" id="1.6.5"></a>
+
+
+```python
+##################################
+# Fitting the Agglomerative Clustering algorithm
+# using a range of K values
+##################################
+agglomerative_cluster_list = list()
+agglomerative_cluster_silhouette_score = list()
+for cluster_count in range(2,10):
+    ag = AgglomerativeClustering(n_clusters=cluster_count, 
+                                 linkage='complete')
+    ag = ag.fit(cancer_death_rate_premodelling_clustering)
+    agglomerative_cluster_list.append(cluster_count)
+    agglomerative_cluster_silhouette_score.append(silhouette_score(cancer_death_rate_premodelling_clustering, 
+                                                                   ag.fit_predict(cancer_death_rate_premodelling_clustering), 
+                                                                   metric='euclidean'))
+```
+
+
+```python
+##################################
+# Consolidating the model performance metrics
+# for the Agglomerative Clustering algorithm
+# using a range of K values
+##################################
+agglomerative_clustering_evaluation_summary = pd.DataFrame(zip(agglomerative_cluster_list,
+                                                               agglomerative_cluster_silhouette_score), 
+                                                           columns=['Agglomerative.Cluster.Count',
+                                                                    'Agglomerative.Cluster.Silhouette.Score'])
+agglomerative_clustering_evaluation_summary
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Agglomerative.Cluster.Count</th>
+      <th>Agglomerative.Cluster.Silhouette.Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2</td>
+      <td>0.1224</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>3</td>
+      <td>0.1236</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>4</td>
+      <td>0.1169</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>5</td>
+      <td>0.1770</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>6</td>
+      <td>0.1710</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>7</td>
+      <td>0.1779</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>8</td>
+      <td>0.2015</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>9</td>
+      <td>0.2035</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+###################################
+# Plotting the Silhouette Score performance
+# by cluster count using a range of K values
+# for the Agglomerative Clustering algorithm
+##################################
+agglomerative_cluster_count_values = np.array(agglomerative_clustering_evaluation_summary['Agglomerative.Cluster.Count'].values)
+agglomerative_silhouette_score_values = np.array(agglomerative_clustering_evaluation_summary['Agglomerative.Cluster.Silhouette.Score'].values)
+plt.figure(figsize=(10, 6))
+plt.plot(agglomerative_cluster_count_values, agglomerative_silhouette_score_values, marker='o',ls='-')
+plt.grid(True)
+plt.ylim(0,1)
+plt.title("Agglomerative Clustering Algorithm: Cluster Count by Silhouette Score")
+plt.xlabel("Cluster")
+plt.ylabel("Silhouette Score")
+plt.show()
+```
+
+
+    
+![png](output_179_0.png)
+    
+
+
+
+```python
+###################################
+# Formulating the final Agglomerative Clustering model
+# using the optimal cluster count
+##################################
+agglomerative_clustering = AgglomerativeClustering(n_clusters=2, 
+                                                   linkage='complete')
+agglomerative_clustering = agglomerative_clustering.fit(cancer_death_rate_premodelling_clustering)
+
+###################################
+# Gathering the Silhouette Score
+# for the final K-Means Clustering model
+##################################
+agglomerative_clustering_silhouette_score = silhouette_score(cancer_death_rate_premodelling_clustering, agglomerative_clustering.labels_, metric='euclidean')
+```
+
+
+```python
+##################################
+# Plotting the cluster labels
+# for the final Agglomerative Clustering model
+##################################
+cancer_death_rate_agglomerative_clustering = cancer_death_rate_premodelling_clustering.copy()
+cancer_death_rate_agglomerative_clustering['AGGLOMERATIVE_CLUSTER'] = agglomerative_clustering.fit_predict(cancer_death_rate_agglomerative_clustering)
+cancer_death_rate_agglomerative_clustering.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PROCAN</th>
+      <th>BRECAN</th>
+      <th>CERCAN</th>
+      <th>STOCAN</th>
+      <th>ESOCAN</th>
+      <th>PANCAN</th>
+      <th>LUNCAN</th>
+      <th>COLCAN</th>
+      <th>LIVCAN</th>
+      <th>AGGLOMERATIVE_CLUSTER</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-0.6922</td>
+      <td>-0.4550</td>
+      <td>-0.1771</td>
+      <td>2.0964</td>
+      <td>0.9425</td>
+      <td>-1.4794</td>
+      <td>-0.6095</td>
+      <td>-0.9258</td>
+      <td>1.4059</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-0.0867</td>
+      <td>-1.3608</td>
+      <td>-1.1020</td>
+      <td>0.3084</td>
+      <td>-1.4329</td>
+      <td>0.2506</td>
+      <td>0.8754</td>
+      <td>-0.7177</td>
+      <td>0.8924</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-1.0261</td>
+      <td>-0.8704</td>
+      <td>-0.8184</td>
+      <td>-1.2331</td>
+      <td>-1.8001</td>
+      <td>-0.6858</td>
+      <td>-0.9625</td>
+      <td>-1.0428</td>
+      <td>-1.1914</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.5801</td>
+      <td>0.3703</td>
+      <td>1.0686</td>
+      <td>-0.0427</td>
+      <td>1.2150</td>
+      <td>-1.1052</td>
+      <td>-0.2718</td>
+      <td>-0.5826</td>
+      <td>-0.8379</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>2.1397</td>
+      <td>1.3384</td>
+      <td>0.2846</td>
+      <td>0.3752</td>
+      <td>-0.1795</td>
+      <td>0.1509</td>
+      <td>-1.1314</td>
+      <td>0.7189</td>
+      <td>-0.6376</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+##################################
+# Gathering the pairplot for all variables
+# labelled using the final Agglomerative Clustering model
+##################################
+sns.pairplot(cancer_death_rate_agglomerative_clustering,
+             kind='reg',
+             hue='AGGLOMERATIVE_CLUSTER');
+plt.show()
+```
+
+
+    
+![png](output_182_0.png)
+    
+
+
+### 1.6.6 Ward Hierarchical Clustering <a class="anchor" id="1.6.6"></a>
+
+
+```python
+##################################
+# Fitting the Ward Hierarchical Clustering algorithm
+# using a range of K values
+##################################
+ward_hierarchical_cluster_list = list()
+ward_hierarchical_cluster_silhouette_score = list()
+for cluster_count in range(2,10):
+    wh = AgglomerativeClustering(n_clusters=cluster_count, 
+                                 linkage='ward')
+    wh = wh.fit(cancer_death_rate_premodelling_clustering)
+    ward_hierarchical_cluster_list.append(cluster_count)
+    ward_hierarchical_cluster_silhouette_score.append(silhouette_score(cancer_death_rate_premodelling_clustering, 
+                                                                       wh.fit_predict(cancer_death_rate_premodelling_clustering), 
+                                                                       metric='euclidean'))
+```
+
+
+```python
+##################################
+# Consolidating the model performance metrics
+# for the Ward Hierarchical Clustering algorithm
+# using a range of K values
+##################################
+ward_hierarchical_clustering_evaluation_summary = pd.DataFrame(zip(ward_hierarchical_cluster_list,
+                                                                   ward_hierarchical_cluster_silhouette_score), 
+                                                           columns=['Ward.Hierarchical.Cluster.Count',
+                                                                    'Ward.Hierarchical.Cluster.Silhouette.Score'])
+ward_hierarchical_clustering_evaluation_summary
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Ward.Hierarchical.Cluster.Count</th>
+      <th>Ward.Hierarchical.Cluster.Silhouette.Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2</td>
+      <td>0.2150</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>3</td>
+      <td>0.2043</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>4</td>
+      <td>0.1850</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>5</td>
+      <td>0.1969</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>6</td>
+      <td>0.1890</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>7</td>
+      <td>0.2024</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>8</td>
+      <td>0.2077</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>9</td>
+      <td>0.1659</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+###################################
+# Plotting the Silhouette Score performance
+# by cluster count using a range of K values
+# for the Ward Hierarchical Clustering algorithm
+##################################
+ward_hierarchical_cluster_count_values = np.array(ward_hierarchical_clustering_evaluation_summary['Ward.Hierarchical.Cluster.Count'].values)
+ward_hierarchical_silhouette_score_values = np.array(ward_hierarchical_clustering_evaluation_summary['Ward.Hierarchical.Cluster.Silhouette.Score'].values)
+plt.figure(figsize=(10, 6))
+plt.plot(ward_hierarchical_cluster_count_values, ward_hierarchical_silhouette_score_values, marker='o',ls='-')
+plt.grid(True)
+plt.ylim(0,1)
+plt.title("Ward Hierarchical Clustering Algorithm: Cluster Count by Silhouette Score")
+plt.xlabel("Cluster")
+plt.ylabel("Silhouette Score")
+plt.show()
+```
+
+
+    
+![png](output_186_0.png)
+    
+
+
+
+```python
+###################################
+# Formulating the final Ward Hierarchical Clustering model
+# using the optimal cluster count
+##################################
+ward_hierarchical_clustering = AgglomerativeClustering(n_clusters=2, 
+                                                       linkage='ward')
+ward_hierarchical_clustering = agglomerative_clustering.fit(cancer_death_rate_premodelling_clustering)
+
+###################################
+# Gathering the Silhouette Score
+# for the final Ward Hierarchical model
+##################################
+ward_hierarchical_clustering_silhouette_score = silhouette_score(cancer_death_rate_premodelling_clustering, ward_hierarchical_clustering.labels_, metric='euclidean')
+```
+
+
+```python
+##################################
+# Plotting the cluster labels
+# for the final Ward Hierarchical Clustering model
+##################################
+cancer_death_rate_ward_hierarchical_clustering = cancer_death_rate_premodelling_clustering.copy()
+cancer_death_rate_ward_hierarchical_clustering['WARD_HIERARCHICAL_CLUSTER'] = ward_hierarchical_clustering.fit_predict(cancer_death_rate_ward_hierarchical_clustering)
+cancer_death_rate_ward_hierarchical_clustering.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PROCAN</th>
+      <th>BRECAN</th>
+      <th>CERCAN</th>
+      <th>STOCAN</th>
+      <th>ESOCAN</th>
+      <th>PANCAN</th>
+      <th>LUNCAN</th>
+      <th>COLCAN</th>
+      <th>LIVCAN</th>
+      <th>WARD_HIERARCHICAL_CLUSTER</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-0.6922</td>
+      <td>-0.4550</td>
+      <td>-0.1771</td>
+      <td>2.0964</td>
+      <td>0.9425</td>
+      <td>-1.4794</td>
+      <td>-0.6095</td>
+      <td>-0.9258</td>
+      <td>1.4059</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-0.0867</td>
+      <td>-1.3608</td>
+      <td>-1.1020</td>
+      <td>0.3084</td>
+      <td>-1.4329</td>
+      <td>0.2506</td>
+      <td>0.8754</td>
+      <td>-0.7177</td>
+      <td>0.8924</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-1.0261</td>
+      <td>-0.8704</td>
+      <td>-0.8184</td>
+      <td>-1.2331</td>
+      <td>-1.8001</td>
+      <td>-0.6858</td>
+      <td>-0.9625</td>
+      <td>-1.0428</td>
+      <td>-1.1914</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.5801</td>
+      <td>0.3703</td>
+      <td>1.0686</td>
+      <td>-0.0427</td>
+      <td>1.2150</td>
+      <td>-1.1052</td>
+      <td>-0.2718</td>
+      <td>-0.5826</td>
+      <td>-0.8379</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>2.1397</td>
+      <td>1.3384</td>
+      <td>0.2846</td>
+      <td>0.3752</td>
+      <td>-0.1795</td>
+      <td>0.1509</td>
+      <td>-1.1314</td>
+      <td>0.7189</td>
+      <td>-0.6376</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+##################################
+# Gathering the pairplot for all variables
+# labelled using the final Ward Hierarchical Clustering model
+##################################
+sns.pairplot(cancer_death_rate_ward_hierarchical_clustering,
+             kind='reg',
+             hue='WARD_HIERARCHICAL_CLUSTER');
+plt.show()
+```
+
+
+    
+![png](output_189_0.png)
+    
 
 
 ## 1.7. Consolidated Findings <a class="anchor" id="1.7"></a>
@@ -4328,11 +5926,16 @@ A detailed report was formulated documenting all the analysis steps and findings
 * **[Article]** [Hypothesis Testing with Python: Step by Step Hands-On Tutorial with Practical Examples](https://towardsdatascience.com/hypothesis-testing-with-python-step-by-step-hands-on-tutorial-with-practical-examples-e805975ea96e) by Ece Işık Polat (Towards Data Science)
 * **[Article]** [17 Statistical Hypothesis Tests in Python (Cheat Sheet)](https://machinelearningmastery.com/statistical-hypothesis-tests-in-python-cheat-sheet/) by Jason Brownlee (Machine Learning Mastery)
 * **[Article]** [A Step-by-Step Guide to Hypothesis Testing in Python using Scipy](https://medium.com/@gabriel_renno/a-step-by-step-guide-to-hypothesis-testing-in-python-using-scipy-8eb5b696ab07) by Gabriel Rennó (Medium)
-* **[Publication]** [Ridge Regression: Biased Estimation for Nonorthogonal Problems](https://www.tandfonline.com/doi/abs/10.1080/00401706.1970.10488634) by Arthur Hoerl and Robert Kennard (Technometrics)
-* **[Publication]** [Regression Shrinkage and Selection Via the Lasso](https://rss.onlinelibrary.wiley.com/doi/abs/10.1111/j.2517-6161.1996.tb02080.x) by Rob Tibshirani (Journal of the Royal Statistical Society)
-* **[Publication]** [ Regularization and Variable Selection via the Elastic Net](https://rss.onlinelibrary.wiley.com/doi/10.1111/j.1467-9868.2005.00503.x) by Hui Zou and Trevor Hastie (Journal of the Royal Statistical Society)
+* **[Article]** [10 Clustering Algorithms With Python](https://machinelearningmastery.com/clustering-algorithms-with-python/) by Jason Brownlee (Machine Learning Mastery)
+* **[Article]** [Elbow Method for Optimal Value of K in KMeans](https://www.geeksforgeeks.org/elbow-method-for-optimal-value-of-k-in-kmeans/) by Geeks For Geeks Team (Geeks For Geeks)
+* **[Article]** [How to Use the Elbow Method in Python to Find Optimal Clusters](https://www.statology.org/elbow-method-in-python/) by Statology Team (Statology)
+* **[Article]** [Tutorial: How to Determine the Optimal Number of Clusters for K-Means Clustering](https://blog.cambridgespark.com/how-to-determine-the-optimal-number-of-clusters-for-k-means-clustering-14f27070048f) by Tola Alade (Cambridge Spark)
+* **[Article]** [Optimizing Cluster Hyperparameters: Elbow and Silhouette Method](https://eightify.app/summary/data-science-and-analytics/optimizing-cluster-hyperparameters-elbow-silhouette-method) by Lucas Parisi (Eightify)
+* **[Article]** [Clustering Metrics Better Than the Elbow Method](https://www.kdnuggets.com/2019/10/clustering-metrics-better-elbow-method.html) by Tirthajyoti Sarkar (KD Nuggets)
+* **[Article]** [Practical Implementation Of K-means, Hierarchical, and DBSCAN Clustering On Dataset With Hyperparameter Optimization](https://medium.com/analytics-vidhya/practical-implementation-of-k-means-hierarchical-and-dbscan-clustering-on-dataset-with-bd7f3d13ef7f) by Janibasha Shaik (Towards Data Science)
+* **[Article]** [KMeans Hyper-parameters Explained with Examples](https://towardsdatascience.com/kmeans-hyper-parameters-explained-with-examples-c93505820cd3) by Sujeewa Kumaratunga (Towards Data Science)
+* **[Article]** [KMeans Silhouette Score Python Exampley](https://vitalflux.com/kmeans-silhouette-score-explained-with-python-example/#google_vignette) by Ajitesh Kumar (Analytics Yogi)
 
-***
 
 
 ```python
@@ -4343,3 +5946,5 @@ display(HTML("<style>.rendered_html { font-size: 15px; font-family: 'Trebuchet M
 
 <style>.rendered_html { font-size: 15px; font-family: 'Trebuchet MS'; }</style>
 
+
+***
