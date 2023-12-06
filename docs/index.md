@@ -4080,6 +4080,11 @@ display(cancer_death_rate_premodelling.shape)
 
 
 ```python
+
+```
+
+
+```python
 ##################################
 # Listing the column names and data types
 ##################################
@@ -4242,7 +4247,7 @@ plt.show()
 
 
     
-![png](output_151_0.png)
+![png](output_152_0.png)
     
 
 
@@ -4497,7 +4502,7 @@ plt.show()
 
 
     
-![png](output_156_0.png)
+![png](output_157_0.png)
     
 
 
@@ -4522,7 +4527,7 @@ plt.show()
 
 
     
-![png](output_157_0.png)
+![png](output_158_0.png)
     
 
 
@@ -4670,15 +4675,18 @@ cancer_death_rate_kmeans_clustering.head()
 # Gathering the pairplot for all variables
 # labelled using the final K-Means Clustering model
 ##################################
-sns.pairplot(cancer_death_rate_kmeans_clustering,
-             kind='reg',
-             hue='KMEANS_CLUSTER');
+cancer_death_rate_kmeans_clustering_plot = sns.pairplot(cancer_death_rate_kmeans_clustering,
+                                                        kind='reg',
+                                                        hue='KMEANS_CLUSTER');
+sns.move_legend(cancer_death_rate_kmeans_clustering_plot, 
+                "lower center",
+                bbox_to_anchor=(.5, 1), ncol=2, title='KMEANS_CLUSTER', frameon=False)
 plt.show()
 ```
 
 
     
-![png](output_160_0.png)
+![png](output_161_0.png)
     
 
 
@@ -4824,7 +4832,7 @@ plt.show()
 
 
     
-![png](output_164_0.png)
+![png](output_165_0.png)
     
 
 
@@ -4849,7 +4857,7 @@ plt.show()
 
 
     
-![png](output_165_0.png)
+![png](output_166_0.png)
     
 
 
@@ -4997,15 +5005,18 @@ cancer_death_rate_bisecting_kmeans_clustering.head()
 # Gathering the pairplot for all variables
 # labelled using the final Bisecting K-Means Clustering model
 ##################################
-sns.pairplot(cancer_death_rate_bisecting_kmeans_clustering,
-             kind='reg',
-             hue='BISECTING_KMEANS_CLUSTER');
+cancer_death_rate_bisecting_kmeans_clustering_plot = sns.pairplot(cancer_death_rate_bisecting_kmeans_clustering,
+                                                                  kind='reg',
+                                                                  hue='BISECTING_KMEANS_CLUSTER');
+sns.move_legend(cancer_death_rate_bisecting_kmeans_clustering_plot, 
+                "lower center",
+                bbox_to_anchor=(.5, 1), ncol=2, title='BISECTING_KMEANS_CLUSTER', frameon=False)
 plt.show()
 ```
 
 
     
-![png](output_168_0.png)
+![png](output_169_0.png)
     
 
 
@@ -5137,7 +5148,7 @@ plt.show()
 
 
     
-![png](output_172_0.png)
+![png](output_173_0.png)
     
 
 
@@ -5283,15 +5294,18 @@ cancer_death_rate_gaussian_mixture_clustering.head()
 # Gathering the pairplot for all variables
 # labelled using the final GMM Clustering model
 ##################################
-sns.pairplot(cancer_death_rate_gaussian_mixture_clustering,
-             kind='reg',
-             hue='GMM_CLUSTER');
+cancer_death_rate_gaussian_mixture_clustering_plot = sns.pairplot(cancer_death_rate_gaussian_mixture_clustering,
+                                                                  kind='reg',
+                                                                  hue='GMM_CLUSTER');
+sns.move_legend(cancer_death_rate_gaussian_mixture_clustering_plot, 
+                "lower center",
+                bbox_to_anchor=(.5, 1), ncol=2, title='GMM_CLUSTER', frameon=False)
 plt.show()
 ```
 
 
     
-![png](output_175_0.png)
+![png](output_176_0.png)
     
 
 
@@ -5422,7 +5436,7 @@ plt.show()
 
 
     
-![png](output_179_0.png)
+![png](output_180_0.png)
     
 
 
@@ -5565,15 +5579,18 @@ cancer_death_rate_agglomerative_clustering.head()
 # Gathering the pairplot for all variables
 # labelled using the final Agglomerative Clustering model
 ##################################
-sns.pairplot(cancer_death_rate_agglomerative_clustering,
-             kind='reg',
-             hue='AGGLOMERATIVE_CLUSTER');
+cancer_death_rate_agglomerative_clustering_plot = sns.pairplot(cancer_death_rate_agglomerative_clustering,
+                                                               kind='reg',
+                                                               hue='AGGLOMERATIVE_CLUSTER');
+sns.move_legend(cancer_death_rate_agglomerative_clustering_plot, 
+                "lower center",
+                bbox_to_anchor=(.5, 1), ncol=2, title='AGGLOMERATIVE_CLUSTER', frameon=False)
 plt.show()
 ```
 
 
     
-![png](output_182_0.png)
+![png](output_183_0.png)
     
 
 
@@ -5704,7 +5721,7 @@ plt.show()
 
 
     
-![png](output_186_0.png)
+![png](output_187_0.png)
     
 
 
@@ -5847,19 +5864,526 @@ cancer_death_rate_ward_hierarchical_clustering.head()
 # Gathering the pairplot for all variables
 # labelled using the final Ward Hierarchical Clustering model
 ##################################
-sns.pairplot(cancer_death_rate_ward_hierarchical_clustering,
-             kind='reg',
-             hue='WARD_HIERARCHICAL_CLUSTER');
+cancer_death_rate_ward_hierarchical_clustering_plot = sns.pairplot(cancer_death_rate_ward_hierarchical_clustering,
+                                                                   kind='reg',
+                                                                   hue='WARD_HIERARCHICAL_CLUSTER');
+sns.move_legend(cancer_death_rate_ward_hierarchical_clustering_plot, 
+                "lower center",
+                bbox_to_anchor=(.5, 1), ncol=2, title='WARD_HIERARCHICAL_CLUSTER', frameon=False)
 plt.show()
 ```
 
 
     
-![png](output_189_0.png)
+![png](output_190_0.png)
     
 
 
 ## 1.7. Consolidated Findings <a class="anchor" id="1.7"></a>
+
+
+
+```python
+##################################
+# Consolidating all the
+# model performance measures
+##################################
+clustering_silhouette_score_list = [kmeans_clustering_silhouette_score,
+                                    bisecting_kmeans_clustering_silhouette_score,
+                                    gaussian_mixture_clustering_silhouette_score,
+                                    agglomerative_clustering_silhouette_score,
+                                    ward_hierarchical_clustering_silhouette_score]
+clustering_silhouette_algorithm_list = ['kmeans_clustering',
+                                        'bisecting_kmeans_clustering',
+                                        'gaussian_mixture_clustering',
+                                        'agglomerative_clustering',
+                                        'ward_hierarchical_clustering']
+performance_comparison_silhouette_score = pd.DataFrame(zip(clustering_silhouette_algorithm_list,
+                                                           clustering_silhouette_score_list), 
+                                                       columns=['Clustering.Algorithm',
+                                                                'Silhouette.Score'])
+print('Consolidated Model Performance: ')
+display(performance_comparison_silhouette_score)
+```
+
+    Consolidated Model Performance: 
+    
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Clustering.Algorithm</th>
+      <th>Silhouette.Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>kmeans_clustering</td>
+      <td>0.2285</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>bisecting_kmeans_clustering</td>
+      <td>0.2285</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>gaussian_mixture_clustering</td>
+      <td>0.1745</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>agglomerative_clustering</td>
+      <td>0.1224</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>ward_hierarchical_clustering</td>
+      <td>0.1224</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+```python
+##################################
+# Plotting all the Silhouette Score
+# model performance measures
+##################################
+performance_comparison_silhouette_score.set_index('Clustering.Algorithm', inplace=True)
+performance_comparison_silhouette_score_plot = performance_comparison_silhouette_score.plot.barh(figsize=(10, 6))
+performance_comparison_silhouette_score_plot.set_xlim(0.00,1.00)
+performance_comparison_silhouette_score_plot.set_title("Model Comparison by Silhouette Score Performance for Number of Clusters=2")
+performance_comparison_silhouette_score_plot.set_xlabel("Silhouette Score Performance")
+performance_comparison_silhouette_score_plot.set_ylabel("Clustering Model")
+performance_comparison_silhouette_score_plot.grid(False)
+performance_comparison_silhouette_score_plot.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
+for container in performance_comparison_silhouette_score_plot.containers:
+    performance_comparison_silhouette_score_plot.bar_label(container, fmt='%.5f', padding=-50)
+```
+
+
+    
+![png](output_193_0.png)
+    
+
+
+
+```python
+##################################
+# Exploring the selected final model
+# using the clustering descriptors
+# and K-Means clusters
+##################################
+cancer_death_rate_kmeans_clustering_descriptor = cancer_death_rate_kmeans_clustering.copy()
+cancer_death_rate_kmeans_clustering_descriptor.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PROCAN</th>
+      <th>BRECAN</th>
+      <th>CERCAN</th>
+      <th>STOCAN</th>
+      <th>ESOCAN</th>
+      <th>PANCAN</th>
+      <th>LUNCAN</th>
+      <th>COLCAN</th>
+      <th>LIVCAN</th>
+      <th>KMEANS_CLUSTER</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-0.6922</td>
+      <td>-0.4550</td>
+      <td>-0.1771</td>
+      <td>2.0964</td>
+      <td>0.9425</td>
+      <td>-1.4794</td>
+      <td>-0.6095</td>
+      <td>-0.9258</td>
+      <td>1.4059</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-0.0867</td>
+      <td>-1.3608</td>
+      <td>-1.1020</td>
+      <td>0.3084</td>
+      <td>-1.4329</td>
+      <td>0.2506</td>
+      <td>0.8754</td>
+      <td>-0.7177</td>
+      <td>0.8924</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-1.0261</td>
+      <td>-0.8704</td>
+      <td>-0.8184</td>
+      <td>-1.2331</td>
+      <td>-1.8001</td>
+      <td>-0.6858</td>
+      <td>-0.9625</td>
+      <td>-1.0428</td>
+      <td>-1.1914</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.5801</td>
+      <td>0.3703</td>
+      <td>1.0686</td>
+      <td>-0.0427</td>
+      <td>1.2150</td>
+      <td>-1.1052</td>
+      <td>-0.2718</td>
+      <td>-0.5826</td>
+      <td>-0.8379</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>2.1397</td>
+      <td>1.3384</td>
+      <td>0.2846</td>
+      <td>0.3752</td>
+      <td>-0.1795</td>
+      <td>0.1509</td>
+      <td>-1.1314</td>
+      <td>0.7189</td>
+      <td>-0.6376</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+##################################
+# Gathering the pairplot for all variables
+# labelled using the final K-Means Clustering model
+##################################
+cancer_death_rate_kmeans_clustering_descriptor_plot = sns.pairplot(cancer_death_rate_kmeans_clustering_descriptor,
+                                                        kind='reg',
+                                                        hue='KMEANS_CLUSTER');
+sns.move_legend(cancer_death_rate_kmeans_clustering_descriptor_plot, 
+                "lower center",
+                bbox_to_anchor=(.5, 1), ncol=2, title='KMEANS_CLUSTER', frameon=False)
+plt.show()
+```
+
+
+    
+![png](output_195_0.png)
+    
+
+
+
+```python
+##################################
+# Computing the average descriptors
+# for each K-Means Cluster
+##################################
+cancer_death_rate_kmeans_descriptor_clustered = cancer_death_rate_kmeans_clustering_descriptor.groupby('KMEANS_CLUSTER').mean()
+display(cancer_death_rate_kmeans_descriptor_clustered)
+```
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PROCAN</th>
+      <th>BRECAN</th>
+      <th>CERCAN</th>
+      <th>STOCAN</th>
+      <th>ESOCAN</th>
+      <th>PANCAN</th>
+      <th>LUNCAN</th>
+      <th>COLCAN</th>
+      <th>LIVCAN</th>
+    </tr>
+    <tr>
+      <th>KMEANS_CLUSTER</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.3716</td>
+      <td>0.0735</td>
+      <td>0.6960</td>
+      <td>0.4020</td>
+      <td>0.4186</td>
+      <td>-0.5487</td>
+      <td>-0.6455</td>
+      <td>-0.5991</td>
+      <td>-0.0689</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-0.4235</td>
+      <td>-0.1064</td>
+      <td>-0.7812</td>
+      <td>-0.4948</td>
+      <td>-0.4857</td>
+      <td>0.5787</td>
+      <td>0.6887</td>
+      <td>0.5947</td>
+      <td>0.0770</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+```python
+##################################
+# Computing the average of the 
+# clustering descriptors
+# for each K-Means Cluster
+##################################
+plt.figure(figsize=(10, 6))
+sns.heatmap(cancer_death_rate_kmeans_descriptor_clustered, annot=True, cmap="rocket_r")
+plt.xlabel('Cancer Types')
+plt.ylabel('K-Means Clusters')
+plt.title('Heatmap of Death Rates by Cancer Type and K-Means Clusters')
+plt.show()
+```
+
+
+    
+![png](output_197_0.png)
+    
+
+
+
+```python
+##################################
+# Exploring the selected final model
+# using the target descriptors
+# and K-Means clusters
+##################################
+cancer_death_rate_kmeans_clustering_target = pd.concat([cancer_death_rate_kmeans_clustering[['KMEANS_CLUSTER']],cancer_death_rate_preprocessed[['SMPREV','OWPREV','ACSHAR']]], axis=1, join='inner')
+cancer_death_rate_kmeans_clustering_target.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>KMEANS_CLUSTER</th>
+      <th>SMPREV</th>
+      <th>OWPREV</th>
+      <th>ACSHAR</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0</td>
+      <td>-0.5405</td>
+      <td>-1.4979</td>
+      <td>-1.6782</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>0.5329</td>
+      <td>0.6090</td>
+      <td>0.4008</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1</td>
+      <td>-0.6438</td>
+      <td>0.9033</td>
+      <td>-1.3345</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0</td>
+      <td>-1.0431</td>
+      <td>-1.2574</td>
+      <td>0.3520</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>0</td>
+      <td>-2.1494</td>
+      <td>-0.0314</td>
+      <td>0.2304</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+##################################
+# Computing the target descriptors
+# for each K-Means Cluster
+##################################
+cancer_death_rate_kmeans_target_clustered = cancer_death_rate_kmeans_clustering_target.groupby('KMEANS_CLUSTER').mean()
+display(cancer_death_rate_kmeans_target_clustered)
+```
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>SMPREV</th>
+      <th>OWPREV</th>
+      <th>ACSHAR</th>
+    </tr>
+    <tr>
+      <th>KMEANS_CLUSTER</th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-0.6029</td>
+      <td>-0.4069</td>
+      <td>-0.3014</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.6519</td>
+      <td>0.3761</td>
+      <td>0.2587</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+```python
+##################################
+# Computing the average of the 
+# target descriptors
+# for each K-Means Cluster
+##################################
+plt.figure(figsize=(10, 6))
+sns.heatmap(cancer_death_rate_kmeans_target_clustered, annot=True, cmap="rocket_r")
+plt.xlabel('Lifestyle Factors')
+plt.ylabel('K-Means Clusters')
+plt.title('Heatmap of Lifestyle Factors and K-Means Clusters')
+plt.show()
+```
+
+
+    
+![png](output_200_0.png)
+    
 
 
 # 2. Summary <a class="anchor" id="Summary"></a>
