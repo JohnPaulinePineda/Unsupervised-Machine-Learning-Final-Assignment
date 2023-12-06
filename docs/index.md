@@ -72,6 +72,7 @@ The target descriptor variables for the study are:
 
 The metadata variables for the study are:
 * <span style="color: #FF0000">COUNTRY</span> - Political unit with sovereignty (legitimate and total political power) over a territory and inhabitants within its borders
+* <span style="color: #FF0000">CODE</span> - Unique identifier that represents a geographic entity, by country
 * <span style="color: #FF0000">GEOLAT</span> - Latitude coordinates, by country
 * <span style="color: #FF0000">GEOLON</span> - Longitude coordinates, by country
 
@@ -80,13 +81,14 @@ The metadata variables for the study are:
 
 1. The dataset is comprised of:
     * **208 rows** (observations)
-    * **15 columns** (variables)
-        * **1/15 metadata** (object)
+    * **16 columns** (variables)
+        * **2/16 metadata** (object)
             * <span style="color: #FF0000">COUNTRY</span>
-        * **2/15 metadata** (numeric)
+            * <span style="color: #FF0000">CODE</span>
+        * **2/16 metadata** (numeric)
             * <span style="color: #FF0000">GEOLAT</span>
             * <span style="color: #FF0000">GEOLON</span>
-        * **9/15 clustering descriptors** (numeric)
+        * **9/16 clustering descriptors** (numeric)
              * <span style="color: #FF0000">PROCAN</span>
              * <span style="color: #FF0000">BRECAN</span>
              * <span style="color: #FF0000">CERCAN</span>
@@ -96,11 +98,19 @@ The metadata variables for the study are:
              * <span style="color: #FF0000">LUNCAN</span>
              * <span style="color: #FF0000">COLCAN</span>
              * <span style="color: #FF0000">LIVCAN</span>    
-        * **3/15 target descriptors** (numeric)
+        * **3/16 target descriptors** (numeric)
              * <span style="color: #FF0000">SMPREV</span>
              * <span style="color: #FF0000">OWPREV</span>
              * <span style="color: #FF0000">ACSHAR</span>
              
+
+
+```python
+##################################
+# Installing shap package
+##################################
+# !pip install geopandas
+```
 
 
 ```python
@@ -127,6 +137,8 @@ from scipy import stats
 from sklearn.cluster import KMeans, AffinityPropagation, MeanShift, SpectralClustering, AgglomerativeClustering, Birch, BisectingKMeans
 from sklearn.mixture import GaussianMixture
 from sklearn.metrics import silhouette_score
+
+import geopandas as gpd
 ```
 
 
@@ -143,7 +155,7 @@ pd.options.display.float_format = '{:.4f}'.format
 ##################################
 # Loading the dataset
 ##################################
-cancer_death_rate = pd.read_csv('CancerDeaths.csv')
+cancer_death_rate = pd.read_csv('CancerDeathsByCountryCode.csv')
 ```
 
 
@@ -159,7 +171,7 @@ display(cancer_death_rate.shape)
     
 
 
-    (208, 15)
+    (208, 16)
 
 
 
@@ -176,6 +188,7 @@ display(cancer_death_rate.dtypes)
 
 
     COUNTRY     object
+    CODE        object
     PROCAN     float64
     BRECAN     float64
     CERCAN     float64
@@ -223,6 +236,7 @@ cancer_death_rate.head()
     <tr style="text-align: right;">
       <th></th>
       <th>COUNTRY</th>
+      <th>CODE</th>
       <th>PROCAN</th>
       <th>BRECAN</th>
       <th>CERCAN</th>
@@ -243,6 +257,7 @@ cancer_death_rate.head()
     <tr>
       <th>0</th>
       <td>Afghanistan</td>
+      <td>AFG</td>
       <td>6.3700</td>
       <td>8.6700</td>
       <td>3.9000</td>
@@ -261,6 +276,7 @@ cancer_death_rate.head()
     <tr>
       <th>1</th>
       <td>Albania</td>
+      <td>ALB</td>
       <td>8.8700</td>
       <td>6.5000</td>
       <td>1.6400</td>
@@ -279,6 +295,7 @@ cancer_death_rate.head()
     <tr>
       <th>2</th>
       <td>Algeria</td>
+      <td>DZA</td>
       <td>5.3300</td>
       <td>7.5800</td>
       <td>2.1800</td>
@@ -297,6 +314,7 @@ cancer_death_rate.head()
     <tr>
       <th>3</th>
       <td>American Samoa</td>
+      <td>ASM</td>
       <td>20.9400</td>
       <td>16.8100</td>
       <td>5.0200</td>
@@ -315,6 +333,7 @@ cancer_death_rate.head()
     <tr>
       <th>4</th>
       <td>Andorra</td>
+      <td>AND</td>
       <td>9.6800</td>
       <td>9.0200</td>
       <td>2.0400</td>
@@ -588,6 +607,13 @@ else:
       <td>Afghanistan</td>
       <td>1</td>
     </tr>
+    <tr>
+      <th>CODE</th>
+      <td>203</td>
+      <td>203</td>
+      <td>AFG</td>
+      <td>1</td>
+    </tr>
   </tbody>
 </table>
 </div>
@@ -612,36 +638,37 @@ else:
 
 Data quality findings based on assessment are as follows:
 1. No duplicated rows observed.
-2. Missing data noted for 3 variables with Null.Count>0 and Fill.Rate<1.0.
+2. Missing data noted for 4 variables with Null.Count>0 and Fill.Rate<1.0.
+    * <span style="color: #FF0000">CODE</span>: Null.Count = 5, Fill.Rate = 0.976
     * <span style="color: #FF0000">SMPREV</span>: Null.Count = 22, Fill.Rate = 0.894
     * <span style="color: #FF0000">OWPREV</span>: Null.Count = 17, Fill.Rate = 0.918
     * <span style="color: #FF0000">ACSHAR</span>: Null.Count = 21, Fill.Rate = 0.899
 3. Missing data noted for 25 observations noted with Missing.Rate>0.0.
-    * <span style="color: #FF0000">COUNTRY=American Samoa</span>: Missing.Rate= 0.200
-    * <span style="color: #FF0000">COUNTRY=Northern Ireland</span>: Missing.Rate= 0.200
-    * <span style="color: #FF0000">COUNTRY=United States Virgin Islands</span>: Missing.Rate= 0.200
-    * <span style="color: #FF0000">COUNTRY=Tokelau</span>: Missing.Rate= 0.200
-    * <span style="color: #FF0000">COUNTRY=South Sudan</span>: Missing.Rate= 0.200
-    * <span style="color: #FF0000">COUNTRY=Scotland</span>: Missing.Rate= 0.200
-    * <span style="color: #FF0000">COUNTRY=San Marino</span>: Missing.Rate= 0.200
-    * <span style="color: #FF0000">COUNTRY=Puerto Rico</span>: Missing.Rate= 0.200
-    * <span style="color: #FF0000">COUNTRY=Bermuda</span>: Missing.Rate= 0.200
-    * <span style="color: #FF0000">COUNTRY=Northern Mariana Islands</span>: Missing.Rate= 0.200
-    * <span style="color: #FF0000">COUNTRY=Monaco</span>: Missing.Rate= 0.200
-    * <span style="color: #FF0000">COUNTRY=Guam</span>: Missing.Rate= 0.200
-    * <span style="color: #FF0000">COUNTRY=Greenland</span>: Missing.Rate= 0.200
-    * <span style="color: #FF0000">COUNTRY=England</span>: Missing.Rate= 0.200
-    * <span style="color: #FF0000">COUNTRY=Wales</span>: Missing.Rate= 0.200
-    * <span style="color: #FF0000">COUNTRY=Niue</span>: Missing.Rate= 0.133
-    * <span style="color: #FF0000">COUNTRY=Palau</span>: Missing.Rate= 0.133
-    * <span style="color: #FF0000">COUNTRY=Palestine</span>: Missing.Rate= 0.133
-    * <span style="color: #FF0000">COUNTRY=Taiwan</span>: Missing.Rate= 0.133
-    * <span style="color: #FF0000">COUNTRY=Cook Islands</span>: Missing.Rate= 0.133
-    * <span style="color: #FF0000">COUNTRY=Nauru</span>: Missing.Rate= 0.067
-    * <span style="color: #FF0000">COUNTRY=Micronesia</span>: Missing.Rate= 0.067
-    * <span style="color: #FF0000">COUNTRY=Saint Kitts and Nevis</span>: Missing.Rate= 0.067
-    * <span style="color: #FF0000">COUNTRY=Marshall Islands</span>: Missing.Rate= 0.067
-    * <span style="color: #FF0000">COUNTRY=Tuvalu</span>: Missing.Rate= 0.067
+    * <span style="color: #FF0000">COUNTRY=Wales</span>: Missing.Rate= 0.250
+    * <span style="color: #FF0000">COUNTRY=Northern Ireland</span>: Missing.Rate= 0.250
+    * <span style="color: #FF0000">COUNTRY=England</span>: Missing.Rate= 0.250
+    * <span style="color: #FF0000">COUNTRY=Tokelau</span>: Missing.Rate= 0.250
+    * <span style="color: #FF0000">COUNTRY=Scotland</span>: Missing.Rate= 0.250
+    * <span style="color: #FF0000">COUNTRY=American Samoa</span>: Missing.Rate= 0.187
+    * <span style="color: #FF0000">COUNTRY=United States Virgin Islands</span>: Missing.Rate= 0.187
+    * <span style="color: #FF0000">COUNTRY=South Sudan</span>: Missing.Rate= 0.187
+    * <span style="color: #FF0000">COUNTRY=San Marino</span>: Missing.Rate= 0.187
+    * <span style="color: #FF0000">COUNTRY=Puerto Rico</span>: Missing.Rate= 0.187
+    * <span style="color: #FF0000">COUNTRY=Bermuda</span>: Missing.Rate= 0.187
+    * <span style="color: #FF0000">COUNTRY=Northern Mariana Islands</span>: Missing.Rate= 0.187
+    * <span style="color: #FF0000">COUNTRY=Monaco</span>: Missing.Rate= 0.187
+    * <span style="color: #FF0000">COUNTRY=Guam</span>: Missing.Rate= 0.187
+    * <span style="color: #FF0000">COUNTRY=Greenland</span>: Missing.Rate= 0.187
+    * <span style="color: #FF0000">COUNTRY=Niue</span>: Missing.Rate= 0.125
+    * <span style="color: #FF0000">COUNTRY=Palau</span>: Missing.Rate= 0.125
+    * <span style="color: #FF0000">COUNTRY=Palestine</span>: Missing.Rate= 0.125
+    * <span style="color: #FF0000">COUNTRY=Taiwan</span>: Missing.Rate= 0.125
+    * <span style="color: #FF0000">COUNTRY=Cook Islands</span>: Missing.Rate= 0.125
+    * <span style="color: #FF0000">COUNTRY=Nauru</span>: Missing.Rate= 0.062
+    * <span style="color: #FF0000">COUNTRY=Micronesia</span>: Missing.Rate= 0.062
+    * <span style="color: #FF0000">COUNTRY=Saint Kitts and Nevis</span>: Missing.Rate= 0.062
+    * <span style="color: #FF0000">COUNTRY=Marshall Islands</span>: Missing.Rate= 0.062
+    * <span style="color: #FF0000">COUNTRY=Tuvalu</span>: Missing.Rate= 0.062
 4. No low variance observed for any variable with First.Second.Mode.Ratio>5.
 5. No low variance observed for any variable with Unique.Count.Ratio>10.
 6. High skewness observed for 1 variable with Skewness>3 or Skewness<(-3).
@@ -770,6 +797,15 @@ display(all_column_quality_summary)
     </tr>
     <tr>
       <th>1</th>
+      <td>CODE</td>
+      <td>object</td>
+      <td>208</td>
+      <td>203</td>
+      <td>5</td>
+      <td>0.9760</td>
+    </tr>
+    <tr>
+      <th>2</th>
       <td>PROCAN</td>
       <td>float64</td>
       <td>208</td>
@@ -778,7 +814,7 @@ display(all_column_quality_summary)
       <td>1.0000</td>
     </tr>
     <tr>
-      <th>2</th>
+      <th>3</th>
       <td>BRECAN</td>
       <td>float64</td>
       <td>208</td>
@@ -787,7 +823,7 @@ display(all_column_quality_summary)
       <td>1.0000</td>
     </tr>
     <tr>
-      <th>3</th>
+      <th>4</th>
       <td>CERCAN</td>
       <td>float64</td>
       <td>208</td>
@@ -796,7 +832,7 @@ display(all_column_quality_summary)
       <td>1.0000</td>
     </tr>
     <tr>
-      <th>4</th>
+      <th>5</th>
       <td>STOCAN</td>
       <td>float64</td>
       <td>208</td>
@@ -805,7 +841,7 @@ display(all_column_quality_summary)
       <td>1.0000</td>
     </tr>
     <tr>
-      <th>5</th>
+      <th>6</th>
       <td>ESOCAN</td>
       <td>float64</td>
       <td>208</td>
@@ -814,7 +850,7 @@ display(all_column_quality_summary)
       <td>1.0000</td>
     </tr>
     <tr>
-      <th>6</th>
+      <th>7</th>
       <td>PANCAN</td>
       <td>float64</td>
       <td>208</td>
@@ -823,7 +859,7 @@ display(all_column_quality_summary)
       <td>1.0000</td>
     </tr>
     <tr>
-      <th>7</th>
+      <th>8</th>
       <td>LUNCAN</td>
       <td>float64</td>
       <td>208</td>
@@ -832,7 +868,7 @@ display(all_column_quality_summary)
       <td>1.0000</td>
     </tr>
     <tr>
-      <th>8</th>
+      <th>9</th>
       <td>COLCAN</td>
       <td>float64</td>
       <td>208</td>
@@ -841,7 +877,7 @@ display(all_column_quality_summary)
       <td>1.0000</td>
     </tr>
     <tr>
-      <th>9</th>
+      <th>10</th>
       <td>LIVCAN</td>
       <td>float64</td>
       <td>208</td>
@@ -850,7 +886,7 @@ display(all_column_quality_summary)
       <td>1.0000</td>
     </tr>
     <tr>
-      <th>10</th>
+      <th>11</th>
       <td>SMPREV</td>
       <td>float64</td>
       <td>208</td>
@@ -859,7 +895,7 @@ display(all_column_quality_summary)
       <td>0.8942</td>
     </tr>
     <tr>
-      <th>11</th>
+      <th>12</th>
       <td>OWPREV</td>
       <td>float64</td>
       <td>208</td>
@@ -868,7 +904,7 @@ display(all_column_quality_summary)
       <td>0.9183</td>
     </tr>
     <tr>
-      <th>12</th>
+      <th>13</th>
       <td>ACSHAR</td>
       <td>float64</td>
       <td>208</td>
@@ -877,7 +913,7 @@ display(all_column_quality_summary)
       <td>0.8990</td>
     </tr>
     <tr>
-      <th>13</th>
+      <th>14</th>
       <td>GEOLAT</td>
       <td>float64</td>
       <td>208</td>
@@ -886,7 +922,7 @@ display(all_column_quality_summary)
       <td>1.0000</td>
     </tr>
     <tr>
-      <th>14</th>
+      <th>15</th>
       <td>GEOLON</td>
       <td>float64</td>
       <td>208</td>
@@ -911,7 +947,7 @@ len(all_column_quality_summary[(all_column_quality_summary['Fill.Rate']<1)])
 
 
 
-    3
+    4
 
 
 
@@ -956,7 +992,7 @@ else:
   </thead>
   <tbody>
     <tr>
-      <th>10</th>
+      <th>11</th>
       <td>SMPREV</td>
       <td>float64</td>
       <td>208</td>
@@ -965,7 +1001,7 @@ else:
       <td>0.8942</td>
     </tr>
     <tr>
-      <th>12</th>
+      <th>13</th>
       <td>ACSHAR</td>
       <td>float64</td>
       <td>208</td>
@@ -974,13 +1010,22 @@ else:
       <td>0.8990</td>
     </tr>
     <tr>
-      <th>11</th>
+      <th>12</th>
       <td>OWPREV</td>
       <td>float64</td>
       <td>208</td>
       <td>191</td>
       <td>17</td>
       <td>0.9183</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>CODE</td>
+      <td>object</td>
+      <td>208</td>
+      <td>203</td>
+      <td>5</td>
+      <td>0.9760</td>
     </tr>
   </tbody>
 </table>
@@ -1074,35 +1119,35 @@ display(all_row_quality_summary)
     <tr>
       <th>0</th>
       <td>Afghanistan</td>
-      <td>15</td>
+      <td>16</td>
       <td>0</td>
       <td>0.0000</td>
     </tr>
     <tr>
       <th>1</th>
       <td>Albania</td>
-      <td>15</td>
+      <td>16</td>
       <td>0</td>
       <td>0.0000</td>
     </tr>
     <tr>
       <th>2</th>
       <td>Algeria</td>
-      <td>15</td>
+      <td>16</td>
       <td>0</td>
       <td>0.0000</td>
     </tr>
     <tr>
       <th>3</th>
       <td>American Samoa</td>
-      <td>15</td>
+      <td>16</td>
       <td>3</td>
-      <td>0.2000</td>
+      <td>0.1875</td>
     </tr>
     <tr>
       <th>4</th>
       <td>Andorra</td>
-      <td>15</td>
+      <td>16</td>
       <td>0</td>
       <td>0.0000</td>
     </tr>
@@ -1116,35 +1161,35 @@ display(all_row_quality_summary)
     <tr>
       <th>203</th>
       <td>Vietnam</td>
-      <td>15</td>
+      <td>16</td>
       <td>0</td>
       <td>0.0000</td>
     </tr>
     <tr>
       <th>204</th>
       <td>Wales</td>
-      <td>15</td>
-      <td>3</td>
-      <td>0.2000</td>
+      <td>16</td>
+      <td>4</td>
+      <td>0.2500</td>
     </tr>
     <tr>
       <th>205</th>
       <td>Yemen</td>
-      <td>15</td>
+      <td>16</td>
       <td>0</td>
       <td>0.0000</td>
     </tr>
     <tr>
       <th>206</th>
       <td>Zambia</td>
-      <td>15</td>
+      <td>16</td>
       <td>0</td>
       <td>0.0000</td>
     </tr>
     <tr>
       <th>207</th>
       <td>Zimbabwe</td>
-      <td>15</td>
+      <td>16</td>
       <td>0</td>
       <td>0.0000</td>
     </tr>
@@ -1218,199 +1263,183 @@ else:
   </thead>
   <tbody>
     <tr>
-      <th>3</th>
-      <td>American Samoa</td>
-      <td>15</td>
-      <td>3</td>
-      <td>0.2000</td>
+      <th>204</th>
+      <td>Wales</td>
+      <td>16</td>
+      <td>4</td>
+      <td>0.2500</td>
     </tr>
     <tr>
       <th>135</th>
       <td>Northern Ireland</td>
-      <td>15</td>
-      <td>3</td>
-      <td>0.2000</td>
-    </tr>
-    <tr>
-      <th>198</th>
-      <td>United States Virgin Islands</td>
-      <td>15</td>
-      <td>3</td>
-      <td>0.2000</td>
-    </tr>
-    <tr>
-      <th>186</th>
-      <td>Tokelau</td>
-      <td>15</td>
-      <td>3</td>
-      <td>0.2000</td>
-    </tr>
-    <tr>
-      <th>173</th>
-      <td>South Sudan</td>
-      <td>15</td>
-      <td>3</td>
-      <td>0.2000</td>
-    </tr>
-    <tr>
-      <th>161</th>
-      <td>Scotland</td>
-      <td>15</td>
-      <td>3</td>
-      <td>0.2000</td>
-    </tr>
-    <tr>
-      <th>158</th>
-      <td>San Marino</td>
-      <td>15</td>
-      <td>3</td>
-      <td>0.2000</td>
-    </tr>
-    <tr>
-      <th>149</th>
-      <td>Puerto Rico</td>
-      <td>15</td>
-      <td>3</td>
-      <td>0.2000</td>
-    </tr>
-    <tr>
-      <th>20</th>
-      <td>Bermuda</td>
-      <td>15</td>
-      <td>3</td>
-      <td>0.2000</td>
-    </tr>
-    <tr>
-      <th>136</th>
-      <td>Northern Mariana Islands</td>
-      <td>15</td>
-      <td>3</td>
-      <td>0.2000</td>
-    </tr>
-    <tr>
-      <th>118</th>
-      <td>Monaco</td>
-      <td>15</td>
-      <td>3</td>
-      <td>0.2000</td>
-    </tr>
-    <tr>
-      <th>74</th>
-      <td>Guam</td>
-      <td>15</td>
-      <td>3</td>
-      <td>0.2000</td>
-    </tr>
-    <tr>
-      <th>72</th>
-      <td>Greenland</td>
-      <td>15</td>
-      <td>3</td>
-      <td>0.2000</td>
+      <td>16</td>
+      <td>4</td>
+      <td>0.2500</td>
     </tr>
     <tr>
       <th>57</th>
       <td>England</td>
-      <td>15</td>
-      <td>3</td>
-      <td>0.2000</td>
+      <td>16</td>
+      <td>4</td>
+      <td>0.2500</td>
     </tr>
     <tr>
-      <th>204</th>
-      <td>Wales</td>
-      <td>15</td>
+      <th>186</th>
+      <td>Tokelau</td>
+      <td>16</td>
+      <td>4</td>
+      <td>0.2500</td>
+    </tr>
+    <tr>
+      <th>161</th>
+      <td>Scotland</td>
+      <td>16</td>
+      <td>4</td>
+      <td>0.2500</td>
+    </tr>
+    <tr>
+      <th>198</th>
+      <td>United States Virgin Islands</td>
+      <td>16</td>
       <td>3</td>
-      <td>0.2000</td>
+      <td>0.1875</td>
+    </tr>
+    <tr>
+      <th>173</th>
+      <td>South Sudan</td>
+      <td>16</td>
+      <td>3</td>
+      <td>0.1875</td>
+    </tr>
+    <tr>
+      <th>158</th>
+      <td>San Marino</td>
+      <td>16</td>
+      <td>3</td>
+      <td>0.1875</td>
+    </tr>
+    <tr>
+      <th>149</th>
+      <td>Puerto Rico</td>
+      <td>16</td>
+      <td>3</td>
+      <td>0.1875</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>Bermuda</td>
+      <td>16</td>
+      <td>3</td>
+      <td>0.1875</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>American Samoa</td>
+      <td>16</td>
+      <td>3</td>
+      <td>0.1875</td>
+    </tr>
+    <tr>
+      <th>118</th>
+      <td>Monaco</td>
+      <td>16</td>
+      <td>3</td>
+      <td>0.1875</td>
+    </tr>
+    <tr>
+      <th>74</th>
+      <td>Guam</td>
+      <td>16</td>
+      <td>3</td>
+      <td>0.1875</td>
+    </tr>
+    <tr>
+      <th>72</th>
+      <td>Greenland</td>
+      <td>16</td>
+      <td>3</td>
+      <td>0.1875</td>
+    </tr>
+    <tr>
+      <th>136</th>
+      <td>Northern Mariana Islands</td>
+      <td>16</td>
+      <td>3</td>
+      <td>0.1875</td>
     </tr>
     <tr>
       <th>132</th>
       <td>Niue</td>
-      <td>15</td>
+      <td>16</td>
       <td>2</td>
-      <td>0.1333</td>
+      <td>0.1250</td>
     </tr>
     <tr>
       <th>140</th>
       <td>Palau</td>
-      <td>15</td>
+      <td>16</td>
       <td>2</td>
-      <td>0.1333</td>
+      <td>0.1250</td>
     </tr>
     <tr>
       <th>141</th>
       <td>Palestine</td>
-      <td>15</td>
+      <td>16</td>
       <td>2</td>
-      <td>0.1333</td>
+      <td>0.1250</td>
     </tr>
     <tr>
       <th>181</th>
       <td>Taiwan</td>
-      <td>15</td>
+      <td>16</td>
       <td>2</td>
-      <td>0.1333</td>
+      <td>0.1250</td>
     </tr>
     <tr>
       <th>41</th>
       <td>Cook Islands</td>
-      <td>15</td>
+      <td>16</td>
       <td>2</td>
-      <td>0.1333</td>
+      <td>0.1250</td>
     </tr>
     <tr>
       <th>125</th>
       <td>Nauru</td>
-      <td>15</td>
+      <td>16</td>
       <td>1</td>
-      <td>0.0667</td>
-    </tr>
-    <tr>
-      <th>116</th>
-      <td>Micronesia</td>
-      <td>15</td>
-      <td>1</td>
-      <td>0.0667</td>
+      <td>0.0625</td>
     </tr>
     <tr>
       <th>154</th>
       <td>Saint Kitts and Nevis</td>
-      <td>15</td>
+      <td>16</td>
       <td>1</td>
-      <td>0.0667</td>
+      <td>0.0625</td>
+    </tr>
+    <tr>
+      <th>116</th>
+      <td>Micronesia</td>
+      <td>16</td>
+      <td>1</td>
+      <td>0.0625</td>
     </tr>
     <tr>
       <th>112</th>
       <td>Marshall Islands</td>
-      <td>15</td>
+      <td>16</td>
       <td>1</td>
-      <td>0.0667</td>
+      <td>0.0625</td>
     </tr>
     <tr>
       <th>192</th>
       <td>Tuvalu</td>
-      <td>15</td>
+      <td>16</td>
       <td>1</td>
-      <td>0.0667</td>
+      <td>0.0625</td>
     </tr>
   </tbody>
 </table>
 </div>
-
-
-
-```python
-##################################
-# Counting the number of rows
-# with Missing.Rate > 0.20
-##################################
-len(all_row_quality_summary[(all_row_quality_summary['Missing.Rate']>0.20)])
-```
-
-
-
-
-    0
-
 
 
 
@@ -2173,6 +2202,18 @@ else:
       <td>208</td>
       <td>1.0000</td>
     </tr>
+    <tr>
+      <th>1</th>
+      <td>CODE</td>
+      <td>AFG</td>
+      <td>PSX</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1.0000</td>
+      <td>203</td>
+      <td>208</td>
+      <td>0.9760</td>
+    </tr>
   </tbody>
 </table>
 </div>
@@ -2360,41 +2401,42 @@ len(categorical_column_quality_summary[(categorical_column_quality_summary['Uniq
 
 1. Subsets of rows with high rates of missing data were removed from the dataset:
     * 25 rows with Missing.Rate>0.0 were exluded for subsequent analysis.
-        * <span style="color: #FF0000">COUNTRY=American Samoa</span>: Missing.Rate= 0.200
-        * <span style="color: #FF0000">COUNTRY=Northern Ireland</span>: Missing.Rate= 0.200
-        * <span style="color: #FF0000">COUNTRY=United States Virgin Islands</span>: Missing.Rate= 0.200
-        * <span style="color: #FF0000">COUNTRY=Tokelau</span>: Missing.Rate= 0.200
-        * <span style="color: #FF0000">COUNTRY=South Sudan</span>: Missing.Rate= 0.200
-        * <span style="color: #FF0000">COUNTRY=Scotland</span>: Missing.Rate= 0.200
-        * <span style="color: #FF0000">COUNTRY=San Marino</span>: Missing.Rate= 0.200
-        * <span style="color: #FF0000">COUNTRY=Puerto Rico</span>: Missing.Rate= 0.200
-        * <span style="color: #FF0000">COUNTRY=Bermuda</span>: Missing.Rate= 0.200
-        * <span style="color: #FF0000">COUNTRY=Northern Mariana Islands</span>: Missing.Rate= 0.200
-        * <span style="color: #FF0000">COUNTRY=Monaco</span>: Missing.Rate= 0.200
-        * <span style="color: #FF0000">COUNTRY=Guam</span>: Missing.Rate= 0.200
-        * <span style="color: #FF0000">COUNTRY=Greenland</span>: Missing.Rate= 0.200
-        * <span style="color: #FF0000">COUNTRY=England</span>: Missing.Rate= 0.200
-        * <span style="color: #FF0000">COUNTRY=Wales</span>: Missing.Rate= 0.200
-        * <span style="color: #FF0000">COUNTRY=Niue</span>: Missing.Rate= 0.133
-        * <span style="color: #FF0000">COUNTRY=Palau</span>: Missing.Rate= 0.133
-        * <span style="color: #FF0000">COUNTRY=Palestine</span>: Missing.Rate= 0.133
-        * <span style="color: #FF0000">COUNTRY=Taiwan</span>: Missing.Rate= 0.133
-        * <span style="color: #FF0000">COUNTRY=Cook Islands</span>: Missing.Rate= 0.133
-        * <span style="color: #FF0000">COUNTRY=Nauru</span>: Missing.Rate= 0.067
-        * <span style="color: #FF0000">COUNTRY=Micronesia</span>: Missing.Rate= 0.067
-        * <span style="color: #FF0000">COUNTRY=Saint Kitts and Nevis</span>: Missing.Rate= 0.067
-        * <span style="color: #FF0000">COUNTRY=Marshall Islands</span>: Missing.Rate= 0.067
-        * <span style="color: #FF0000">COUNTRY=Tuvalu</span>: Missing.Rate= 0.067
+        * <span style="color: #FF0000">COUNTRY=Wales</span>: Missing.Rate= 0.250
+        * <span style="color: #FF0000">COUNTRY=Northern Ireland</span>: Missing.Rate= 0.250
+        * <span style="color: #FF0000">COUNTRY=England</span>: Missing.Rate= 0.250
+        * <span style="color: #FF0000">COUNTRY=Tokelau</span>: Missing.Rate= 0.250
+        * <span style="color: #FF0000">COUNTRY=Scotland</span>: Missing.Rate= 0.250
+        * <span style="color: #FF0000">COUNTRY=American Samoa</span>: Missing.Rate= 0.187
+        * <span style="color: #FF0000">COUNTRY=United States Virgin Islands</span>: Missing.Rate= 0.187
+        * <span style="color: #FF0000">COUNTRY=South Sudan</span>: Missing.Rate= 0.187
+        * <span style="color: #FF0000">COUNTRY=San Marino</span>: Missing.Rate= 0.187
+        * <span style="color: #FF0000">COUNTRY=Puerto Rico</span>: Missing.Rate= 0.187
+        * <span style="color: #FF0000">COUNTRY=Bermuda</span>: Missing.Rate= 0.187
+        * <span style="color: #FF0000">COUNTRY=Northern Mariana Islands</span>: Missing.Rate= 0.187
+        * <span style="color: #FF0000">COUNTRY=Monaco</span>: Missing.Rate= 0.187
+        * <span style="color: #FF0000">COUNTRY=Guam</span>: Missing.Rate= 0.187
+        * <span style="color: #FF0000">COUNTRY=Greenland</span>: Missing.Rate= 0.187
+        * <span style="color: #FF0000">COUNTRY=Niue</span>: Missing.Rate= 0.125
+        * <span style="color: #FF0000">COUNTRY=Palau</span>: Missing.Rate= 0.125
+        * <span style="color: #FF0000">COUNTRY=Palestine</span>: Missing.Rate= 0.125
+        * <span style="color: #FF0000">COUNTRY=Taiwan</span>: Missing.Rate= 0.125
+        * <span style="color: #FF0000">COUNTRY=Cook Islands</span>: Missing.Rate= 0.125
+        * <span style="color: #FF0000">COUNTRY=Nauru</span>: Missing.Rate= 0.062
+        * <span style="color: #FF0000">COUNTRY=Micronesia</span>: Missing.Rate= 0.062
+        * <span style="color: #FF0000">COUNTRY=Saint Kitts and Nevis</span>: Missing.Rate= 0.062
+        * <span style="color: #FF0000">COUNTRY=Marshall Islands</span>: Missing.Rate= 0.062
+        * <span style="color: #FF0000">COUNTRY=Tuvalu</span>: Missing.Rate= 0.062
 2. No variables were removed due to zero or near-zero variance.
 3. The cleaned dataset is comprised of:
     * **183 rows** (observations)
-    * **15 columns** (variables)
-        * **1/15 metadata** (object)
+    * **16 columns** (variables)
+        * **2/16 metadata** (object)
             * <span style="color: #FF0000">COUNTRY</span>
-        * **2/15 metadata** (numeric)
+            * <span style="color: #FF0000">CODE</span>
+        * **2/16 metadata** (numeric)
             * <span style="color: #FF0000">GEOLAT</span>
             * <span style="color: #FF0000">GEOLON</span>
-        * **9/15 clustering descriptors** (numeric)
+        * **9/16 clustering descriptors** (numeric)
              * <span style="color: #FF0000">PROCAN</span>
              * <span style="color: #FF0000">BRECAN</span>
              * <span style="color: #FF0000">CERCAN</span>
@@ -2404,7 +2446,7 @@ len(categorical_column_quality_summary[(categorical_column_quality_summary['Uniq
              * <span style="color: #FF0000">LUNCAN</span>
              * <span style="color: #FF0000">COLCAN</span>
              * <span style="color: #FF0000">LIVCAN</span>    
-        * **3/15 target descriptors** (numeric)
+        * **3/16 target descriptors** (numeric)
              * <span style="color: #FF0000">SMPREV</span>
              * <span style="color: #FF0000">OWPREV</span>
              * <span style="color: #FF0000">ACSHAR</span>
@@ -2423,7 +2465,7 @@ display(cancer_death_rate.shape)
     
 
 
-    (208, 15)
+    (208, 16)
 
 
 
@@ -2448,7 +2490,7 @@ display(cancer_death_rate_filtered_row.shape)
     
 
 
-    (183, 15)
+    (183, 16)
 
 
 
@@ -2497,71 +2539,76 @@ display(all_column_quality_summary)
     </tr>
     <tr>
       <th>1</th>
-      <td>PROCAN</td>
+      <td>CODE</td>
       <td>0</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>BRECAN</td>
+      <td>PROCAN</td>
       <td>0</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>CERCAN</td>
+      <td>BRECAN</td>
       <td>0</td>
     </tr>
     <tr>
       <th>4</th>
-      <td>STOCAN</td>
+      <td>CERCAN</td>
       <td>0</td>
     </tr>
     <tr>
       <th>5</th>
-      <td>ESOCAN</td>
+      <td>STOCAN</td>
       <td>0</td>
     </tr>
     <tr>
       <th>6</th>
-      <td>PANCAN</td>
+      <td>ESOCAN</td>
       <td>0</td>
     </tr>
     <tr>
       <th>7</th>
-      <td>LUNCAN</td>
+      <td>PANCAN</td>
       <td>0</td>
     </tr>
     <tr>
       <th>8</th>
-      <td>COLCAN</td>
+      <td>LUNCAN</td>
       <td>0</td>
     </tr>
     <tr>
       <th>9</th>
-      <td>LIVCAN</td>
+      <td>COLCAN</td>
       <td>0</td>
     </tr>
     <tr>
       <th>10</th>
-      <td>SMPREV</td>
+      <td>LIVCAN</td>
       <td>0</td>
     </tr>
     <tr>
       <th>11</th>
-      <td>OWPREV</td>
+      <td>SMPREV</td>
       <td>0</td>
     </tr>
     <tr>
       <th>12</th>
-      <td>ACSHAR</td>
+      <td>OWPREV</td>
       <td>0</td>
     </tr>
     <tr>
       <th>13</th>
-      <td>GEOLAT</td>
+      <td>ACSHAR</td>
       <td>0</td>
     </tr>
     <tr>
       <th>14</th>
+      <td>GEOLAT</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>15</th>
       <td>GEOLON</td>
       <td>0</td>
     </tr>
@@ -2593,6 +2640,7 @@ len(all_column_quality_summary[(all_column_quality_summary['Null.Count']>1.00)])
 # for the cleaned data
 ##################################
 cancer_death_rate_cleaned = cancer_death_rate_filtered_row
+cancer_death_rate_cleaned.reset_index(drop=True,inplace=True)
 ```
 
 
@@ -2608,7 +2656,7 @@ display(cancer_death_rate_cleaned.shape)
     
 
 
-    (183, 15)
+    (183, 16)
 
 
 ### 1.4.3 Outlier Detection <a class="anchor" id="1.4.3"></a>
@@ -3324,6 +3372,219 @@ display(cancer_death_rate_transformed_numeric.shape)
     (183, 12)
 
 
+
+```python
+cancer_death_rate_transformed_numeric
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PROCAN</th>
+      <th>BRECAN</th>
+      <th>CERCAN</th>
+      <th>STOCAN</th>
+      <th>ESOCAN</th>
+      <th>PANCAN</th>
+      <th>LUNCAN</th>
+      <th>COLCAN</th>
+      <th>LIVCAN</th>
+      <th>SMPREV</th>
+      <th>OWPREV</th>
+      <th>ACSHAR</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1.5595</td>
+      <td>1.5203</td>
+      <td>1.4836</td>
+      <td>2.1487</td>
+      <td>1.1939</td>
+      <td>1.5456</td>
+      <td>2.4417</td>
+      <td>1.9846</td>
+      <td>1.1035</td>
+      <td>4.7108</td>
+      <td>46.3969</td>
+      <td>0.2004</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1.7272</td>
+      <td>1.4076</td>
+      <td>0.9307</td>
+      <td>1.7470</td>
+      <td>0.6928</td>
+      <td>2.6330</td>
+      <td>3.0570</td>
+      <td>2.0417</td>
+      <td>1.0378</td>
+      <td>6.4628</td>
+      <td>149.2448</td>
+      <td>3.8224</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1.4670</td>
+      <td>1.4686</td>
+      <td>1.1002</td>
+      <td>1.4007</td>
+      <td>0.6154</td>
+      <td>2.0444</td>
+      <td>2.2954</td>
+      <td>1.9526</td>
+      <td>0.7708</td>
+      <td>4.5421</td>
+      <td>163.6112</td>
+      <td>0.7992</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1.7704</td>
+      <td>1.5352</td>
+      <td>1.0595</td>
+      <td>1.6330</td>
+      <td>1.0009</td>
+      <td>3.2883</td>
+      <td>3.2603</td>
+      <td>2.6740</td>
+      <td>1.0911</td>
+      <td>7.4729</td>
+      <td>169.3720</td>
+      <td>5.1050</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1.9120</td>
+      <td>1.6229</td>
+      <td>2.2285</td>
+      <td>1.6682</td>
+      <td>1.2514</td>
+      <td>1.7808</td>
+      <td>2.5816</td>
+      <td>2.0787</td>
+      <td>0.8161</td>
+      <td>3.8904</td>
+      <td>58.1402</td>
+      <td>3.7374</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>178</th>
+      <td>1.9905</td>
+      <td>1.5533</td>
+      <td>1.9988</td>
+      <td>1.8183</td>
+      <td>0.8160</td>
+      <td>2.4509</td>
+      <td>2.8083</td>
+      <td>2.1890</td>
+      <td>0.7997</td>
+      <td>5.7294</td>
+      <td>168.3522</td>
+      <td>2.5885</td>
+    </tr>
+    <tr>
+      <th>179</th>
+      <td>1.2905</td>
+      <td>1.6500</td>
+      <td>1.6597</td>
+      <td>1.7169</td>
+      <td>0.9307</td>
+      <td>2.1167</td>
+      <td>3.0677</td>
+      <td>2.4898</td>
+      <td>0.8322</td>
+      <td>6.4983</td>
+      <td>34.8080</td>
+      <td>4.3473</td>
+    </tr>
+    <tr>
+      <th>180</th>
+      <td>1.5002</td>
+      <td>1.4362</td>
+      <td>1.0565</td>
+      <td>2.0113</td>
+      <td>1.0697</td>
+      <td>1.3550</td>
+      <td>2.3069</td>
+      <td>1.8210</td>
+      <td>0.8885</td>
+      <td>5.2531</td>
+      <td>120.5007</td>
+      <td>0.0504</td>
+    </tr>
+    <tr>
+      <th>181</th>
+      <td>1.9556</td>
+      <td>1.6259</td>
+      <td>2.3874</td>
+      <td>1.6536</td>
+      <td>1.3591</td>
+      <td>2.2641</td>
+      <td>2.3685</td>
+      <td>2.2649</td>
+      <td>0.8543</td>
+      <td>4.5909</td>
+      <td>58.9437</td>
+      <td>3.5868</td>
+    </tr>
+    <tr>
+      <th>182</th>
+      <td>2.1649</td>
+      <td>1.7314</td>
+      <td>2.5992</td>
+      <td>1.8555</td>
+      <td>1.3729</td>
+      <td>2.9086</td>
+      <td>2.5914</td>
+      <td>2.2817</td>
+      <td>1.1442</td>
+      <td>4.5666</td>
+      <td>88.2092</td>
+      <td>2.8255</td>
+    </tr>
+  </tbody>
+</table>
+<p>183 rows × 12 columns</p>
+</div>
+
+
+
 ### 1.4.6 Centering and Scaling <a class="anchor" id="1.4.6"></a>
 
 1. All numeric variables were transformed using the standardization method to achieve a comparable scale between values.
@@ -3363,73 +3624,73 @@ for column in cancer_death_rate_scaled_numeric:
 
 
     
-![png](output_122_0.png)
+![png](output_123_0.png)
     
 
 
 
     
-![png](output_122_1.png)
+![png](output_123_1.png)
     
 
 
 
     
-![png](output_122_2.png)
+![png](output_123_2.png)
     
 
 
 
     
-![png](output_122_3.png)
+![png](output_123_3.png)
     
 
 
 
     
-![png](output_122_4.png)
+![png](output_123_4.png)
     
 
 
 
     
-![png](output_122_5.png)
+![png](output_123_5.png)
     
 
 
 
     
-![png](output_122_6.png)
+![png](output_123_6.png)
     
 
 
 
     
-![png](output_122_7.png)
+![png](output_123_7.png)
     
 
 
 
     
-![png](output_122_8.png)
+![png](output_123_8.png)
     
 
 
 
     
-![png](output_122_9.png)
+![png](output_123_9.png)
     
 
 
 
     
-![png](output_122_10.png)
+![png](output_123_10.png)
     
 
 
 
     
-![png](output_122_11.png)
+![png](output_123_11.png)
     
 
 
@@ -3437,13 +3698,14 @@ for column in cancer_death_rate_scaled_numeric:
 
 1. The preprocessed dataset is comprised of:
     * **183 rows** (observations)
-    * **15 columns** (variables)
-        * **1/15 metadata** (object)
+    * **16 columns** (variables)
+        * **1/16 metadata** (object)
             * <span style="color: #FF0000">COUNTRY</span>
-        * **2/15 metadata** (numeric)
+            * <span style="color: #FF0000">CODE</span>
+        * **2/16 metadata** (numeric)
             * <span style="color: #FF0000">GEOLAT</span>
             * <span style="color: #FF0000">GEOLON</span>
-        * **9/15 clustering descriptors** (numeric)
+        * **9/16 clustering descriptors** (numeric)
              * <span style="color: #FF0000">PROCAN</span>
              * <span style="color: #FF0000">BRECAN</span>
              * <span style="color: #FF0000">CERCAN</span>
@@ -3453,7 +3715,7 @@ for column in cancer_death_rate_scaled_numeric:
              * <span style="color: #FF0000">LUNCAN</span>
              * <span style="color: #FF0000">COLCAN</span>
              * <span style="color: #FF0000">LIVCAN</span>    
-        * **3/15 target descriptors** (numeric)
+        * **3/16 target descriptors** (numeric)
              * <span style="color: #FF0000">SMPREV</span>
              * <span style="color: #FF0000">OWPREV</span>
              * <span style="color: #FF0000">ACSHAR</span>
@@ -3481,7 +3743,7 @@ display(cancer_death_rate_preprocessed.shape)
     
 
 
-    (162, 14)
+    (183, 14)
 
 
 ## 1.5. Data Exploration <a class="anchor" id="1.5"></a>
@@ -3569,7 +3831,7 @@ plt.show()
 
 
     
-![png](output_131_0.png)
+![png](output_132_0.png)
     
 
 
@@ -3630,7 +3892,7 @@ plt.show()
 
 
     
-![png](output_134_0.png)
+![png](output_135_0.png)
     
 
 
@@ -3691,13 +3953,13 @@ plt.show()
 
 
     
-![png](output_137_0.png)
+![png](output_138_0.png)
     
 
 
 ### 1.5.2 Hypothesis Testing <a class="anchor" id="1.5.2"></a>
 
-1. The relationship between the numeric descriptors to the <span style="color: #FF0000">CANRAT</span> target descriptors were statistically evaluated using the following hypotheses:
+1. The relationship between the numeric descriptors to the <span style="color: #FF0000">SMPREV</span>, <span style="color: #FF0000">OWPREV</span> and <span style="color: #FF0000">ACSHAR</span> target descriptors were statistically evaluated using the following hypotheses:
     * **Null**: Pearson correlation coefficient is equal to zero 
     * **Alternative**: Pearson correlation coefficient is not equal to zero    
 2. There is sufficient evidence to conclude of a statistically significant linear relationship between the <span style="color: #FF0000">SMPREV</span> target descriptor and 6 of the 9 numeric descriptors given their high Pearson correlation coefficient values with reported low p-values less than the significance level of 0.05.
@@ -3781,48 +4043,48 @@ display(cancer_death_rate_preprocessed_numeric_summary.sort_values(by=['Correlat
     </tr>
     <tr>
       <th>SMPREV_LUNCAN</th>
-      <td>0.6844</td>
+      <td>0.6538</td>
       <td>0.0000</td>
     </tr>
     <tr>
       <th>SMPREV_CERCAN</th>
-      <td>-0.4947</td>
+      <td>-0.4866</td>
       <td>0.0000</td>
     </tr>
     <tr>
       <th>SMPREV_PROCAN</th>
-      <td>-0.4384</td>
+      <td>-0.4232</td>
       <td>0.0000</td>
     </tr>
     <tr>
       <th>SMPREV_COLCAN</th>
-      <td>0.4201</td>
+      <td>0.4198</td>
       <td>0.0000</td>
     </tr>
     <tr>
       <th>SMPREV_PANCAN</th>
-      <td>0.3431</td>
+      <td>0.3604</td>
       <td>0.0000</td>
     </tr>
     <tr>
       <th>SMPREV_ESOCAN</th>
-      <td>-0.2621</td>
-      <td>0.0008</td>
-    </tr>
-    <tr>
-      <th>SMPREV_LIVCAN</th>
-      <td>0.1469</td>
-      <td>0.0621</td>
+      <td>-0.2655</td>
+      <td>0.0003</td>
     </tr>
     <tr>
       <th>SMPREV_STOCAN</th>
-      <td>-0.1396</td>
-      <td>0.0765</td>
+      <td>-0.1196</td>
+      <td>0.1070</td>
+    </tr>
+    <tr>
+      <th>SMPREV_LIVCAN</th>
+      <td>0.1163</td>
+      <td>0.1171</td>
     </tr>
     <tr>
       <th>SMPREV_BRECAN</th>
-      <td>0.0612</td>
-      <td>0.4394</td>
+      <td>0.0566</td>
+      <td>0.4465</td>
     </tr>
   </tbody>
 </table>
@@ -3889,48 +4151,48 @@ display(cancer_death_rate_preprocessed_numeric_summary.sort_values(by=['Correlat
     </tr>
     <tr>
       <th>OWPREV_PANCAN</th>
-      <td>0.5395</td>
+      <td>0.5360</td>
       <td>0.0000</td>
     </tr>
     <tr>
       <th>OWPREV_CERCAN</th>
-      <td>-0.4599</td>
-      <td>0.0000</td>
-    </tr>
-    <tr>
-      <th>OWPREV_LUNCAN</th>
-      <td>0.4405</td>
-      <td>0.0000</td>
-    </tr>
-    <tr>
-      <th>OWPREV_COLCAN</th>
-      <td>0.4403</td>
+      <td>-0.4677</td>
       <td>0.0000</td>
     </tr>
     <tr>
       <th>OWPREV_ESOCAN</th>
-      <td>-0.4346</td>
+      <td>-0.4489</td>
+      <td>0.0000</td>
+    </tr>
+    <tr>
+      <th>OWPREV_LUNCAN</th>
+      <td>0.4445</td>
+      <td>0.0000</td>
+    </tr>
+    <tr>
+      <th>OWPREV_COLCAN</th>
+      <td>0.4442</td>
       <td>0.0000</td>
     </tr>
     <tr>
       <th>OWPREV_STOCAN</th>
-      <td>-0.1129</td>
-      <td>0.1524</td>
+      <td>-0.1189</td>
+      <td>0.1088</td>
     </tr>
     <tr>
       <th>OWPREV_BRECAN</th>
-      <td>0.0531</td>
-      <td>0.5025</td>
+      <td>0.0490</td>
+      <td>0.5105</td>
     </tr>
     <tr>
       <th>OWPREV_PROCAN</th>
-      <td>0.0425</td>
-      <td>0.5916</td>
+      <td>0.0280</td>
+      <td>0.7072</td>
     </tr>
     <tr>
       <th>OWPREV_LIVCAN</th>
-      <td>-0.0418</td>
-      <td>0.5978</td>
+      <td>-0.0214</td>
+      <td>0.7737</td>
     </tr>
   </tbody>
 </table>
@@ -3996,49 +4258,49 @@ display(cancer_death_rate_preprocessed_numeric_summary.sort_values(by=['Correlat
       <td>0.0000</td>
     </tr>
     <tr>
-      <th>ACSHAR_PANCAN</th>
-      <td>0.5676</td>
+      <th>ACSHAR_COLCAN</th>
+      <td>0.6039</td>
       <td>0.0000</td>
     </tr>
     <tr>
-      <th>ACSHAR_COLCAN</th>
-      <td>0.5642</td>
+      <th>ACSHAR_PANCAN</th>
+      <td>0.5929</td>
       <td>0.0000</td>
     </tr>
     <tr>
       <th>ACSHAR_LUNCAN</th>
-      <td>0.3998</td>
+      <td>0.4403</td>
       <td>0.0000</td>
     </tr>
     <tr>
       <th>ACSHAR_PROCAN</th>
-      <td>0.2006</td>
-      <td>0.0105</td>
+      <td>0.2083</td>
+      <td>0.0047</td>
     </tr>
     <tr>
       <th>ACSHAR_BRECAN</th>
-      <td>0.1749</td>
-      <td>0.0260</td>
+      <td>0.1759</td>
+      <td>0.0172</td>
     </tr>
     <tr>
       <th>ACSHAR_CERCAN</th>
-      <td>-0.1181</td>
-      <td>0.1344</td>
+      <td>-0.1347</td>
+      <td>0.0690</td>
     </tr>
     <tr>
       <th>ACSHAR_STOCAN</th>
-      <td>-0.1169</td>
-      <td>0.1385</td>
-    </tr>
-    <tr>
-      <th>ACSHAR_LIVCAN</th>
-      <td>-0.0887</td>
-      <td>0.2619</td>
+      <td>-0.1249</td>
+      <td>0.0921</td>
     </tr>
     <tr>
       <th>ACSHAR_ESOCAN</th>
-      <td>0.0602</td>
-      <td>0.4465</td>
+      <td>0.0732</td>
+      <td>0.3248</td>
+    </tr>
+    <tr>
+      <th>ACSHAR_LIVCAN</th>
+      <td>-0.0709</td>
+      <td>0.3401</td>
     </tr>
   </tbody>
 </table>
@@ -4075,13 +4337,8 @@ display(cancer_death_rate_premodelling.shape)
     
 
 
-    (162, 12)
+    (183, 12)
 
-
-
-```python
-
-```
 
 
 ```python
@@ -4201,6 +4458,21 @@ cancer_death_rate_premodelling.head()
       <td>-1.3345</td>
     </tr>
     <tr>
+      <th>3</th>
+      <td>0.0691</td>
+      <td>-0.3352</td>
+      <td>-0.8866</td>
+      <td>-0.1990</td>
+      <td>0.0272</td>
+      <td>1.2933</td>
+      <td>1.3658</td>
+      <td>1.5903</td>
+      <td>1.3091</td>
+      <td>1.1517</td>
+      <td>1.0213</td>
+      <td>1.1371</td>
+    </tr>
+    <tr>
       <th>4</th>
       <td>0.5801</td>
       <td>0.3703</td>
@@ -4215,21 +4487,6 @@ cancer_death_rate_premodelling.head()
       <td>-1.2574</td>
       <td>0.3520</td>
     </tr>
-    <tr>
-      <th>5</th>
-      <td>2.1397</td>
-      <td>1.3384</td>
-      <td>0.2846</td>
-      <td>0.3752</td>
-      <td>-0.1795</td>
-      <td>0.1509</td>
-      <td>-1.1314</td>
-      <td>0.7189</td>
-      <td>-0.6376</td>
-      <td>-2.1494</td>
-      <td>-0.0314</td>
-      <td>0.2304</td>
-    </tr>
   </tbody>
 </table>
 </div>
@@ -4241,7 +4498,9 @@ cancer_death_rate_premodelling.head()
 ##################################
 # Gathering the pairplot for all variables
 ##################################
-sns.pairplot(cancer_death_rate_premodelling, kind='reg')
+sns.pairplot(cancer_death_rate_premodelling, 
+             kind='reg',
+             plot_kws={'scatter_kws': {'alpha': 0.3}},)
 plt.show()
 ```
 
@@ -4330,6 +4589,18 @@ cancer_death_rate_premodelling_clustering.head()
       <td>-1.1914</td>
     </tr>
     <tr>
+      <th>3</th>
+      <td>0.0691</td>
+      <td>-0.3352</td>
+      <td>-0.8866</td>
+      <td>-0.1990</td>
+      <td>0.0272</td>
+      <td>1.2933</td>
+      <td>1.3658</td>
+      <td>1.5903</td>
+      <td>1.3091</td>
+    </tr>
+    <tr>
       <th>4</th>
       <td>0.5801</td>
       <td>0.3703</td>
@@ -4340,18 +4611,6 @@ cancer_death_rate_premodelling_clustering.head()
       <td>-0.2718</td>
       <td>-0.5826</td>
       <td>-0.8379</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>2.1397</td>
-      <td>1.3384</td>
-      <td>0.2846</td>
-      <td>0.3752</td>
-      <td>-0.1795</td>
-      <td>0.1509</td>
-      <td>-1.1314</td>
-      <td>0.7189</td>
-      <td>-0.6376</td>
     </tr>
   </tbody>
 </table>
@@ -4430,50 +4689,50 @@ kmeans_clustering_evaluation_summary
     <tr>
       <th>0</th>
       <td>2</td>
-      <td>1130.4677</td>
-      <td>0.2285</td>
+      <td>1238.4894</td>
+      <td>0.2355</td>
     </tr>
     <tr>
       <th>1</th>
       <td>3</td>
-      <td>981.2268</td>
-      <td>0.2010</td>
+      <td>1027.3347</td>
+      <td>0.2330</td>
     </tr>
     <tr>
       <th>2</th>
       <td>4</td>
-      <td>878.2950</td>
-      <td>0.1965</td>
+      <td>948.1192</td>
+      <td>0.2323</td>
     </tr>
     <tr>
       <th>3</th>
       <td>5</td>
-      <td>793.1428</td>
-      <td>0.1975</td>
+      <td>897.3084</td>
+      <td>0.1608</td>
     </tr>
     <tr>
       <th>4</th>
       <td>6</td>
-      <td>731.4260</td>
-      <td>0.1955</td>
+      <td>821.6682</td>
+      <td>0.1576</td>
     </tr>
     <tr>
       <th>5</th>
       <td>7</td>
-      <td>683.4748</td>
-      <td>0.1831</td>
+      <td>771.4820</td>
+      <td>0.1627</td>
     </tr>
     <tr>
       <th>6</th>
       <td>8</td>
-      <td>648.7358</td>
-      <td>0.1776</td>
+      <td>725.5394</td>
+      <td>0.1633</td>
     </tr>
     <tr>
       <th>7</th>
       <td>9</td>
-      <td>594.4504</td>
-      <td>0.1860</td>
+      <td>670.6289</td>
+      <td>0.1836</td>
     </tr>
   </tbody>
 </table>
@@ -4609,7 +4868,7 @@ cancer_death_rate_kmeans_clustering.head()
       <td>-0.6095</td>
       <td>-0.9258</td>
       <td>1.4059</td>
-      <td>0</td>
+      <td>1</td>
     </tr>
     <tr>
       <th>1</th>
@@ -4622,7 +4881,7 @@ cancer_death_rate_kmeans_clustering.head()
       <td>0.8754</td>
       <td>-0.7177</td>
       <td>0.8924</td>
-      <td>1</td>
+      <td>0</td>
     </tr>
     <tr>
       <th>2</th>
@@ -4635,7 +4894,20 @@ cancer_death_rate_kmeans_clustering.head()
       <td>-0.9625</td>
       <td>-1.0428</td>
       <td>-1.1914</td>
-      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.0691</td>
+      <td>-0.3352</td>
+      <td>-0.8866</td>
+      <td>-0.1990</td>
+      <td>0.0272</td>
+      <td>1.2933</td>
+      <td>1.3658</td>
+      <td>1.5903</td>
+      <td>1.3091</td>
+      <td>0</td>
     </tr>
     <tr>
       <th>4</th>
@@ -4648,20 +4920,7 @@ cancer_death_rate_kmeans_clustering.head()
       <td>-0.2718</td>
       <td>-0.5826</td>
       <td>-0.8379</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>2.1397</td>
-      <td>1.3384</td>
-      <td>0.2846</td>
-      <td>0.3752</td>
-      <td>-0.1795</td>
-      <td>0.1509</td>
-      <td>-1.1314</td>
-      <td>0.7189</td>
-      <td>-0.6376</td>
-      <td>0</td>
+      <td>1</td>
     </tr>
   </tbody>
 </table>
@@ -4677,6 +4936,8 @@ cancer_death_rate_kmeans_clustering.head()
 ##################################
 cancer_death_rate_kmeans_clustering_plot = sns.pairplot(cancer_death_rate_kmeans_clustering,
                                                         kind='reg',
+                                                        markers=["o", "s"],
+                                                        plot_kws={'scatter_kws': {'alpha': 0.3}},
                                                         hue='KMEANS_CLUSTER');
 sns.move_legend(cancer_death_rate_kmeans_clustering_plot, 
                 "lower center",
@@ -4760,50 +5021,50 @@ bisecting_kmeans_clustering_evaluation_summary
     <tr>
       <th>0</th>
       <td>2</td>
-      <td>1130.4677</td>
-      <td>0.2285</td>
+      <td>1238.4894</td>
+      <td>0.2355</td>
     </tr>
     <tr>
       <th>1</th>
       <td>3</td>
-      <td>985.6366</td>
-      <td>0.2125</td>
+      <td>1080.6399</td>
+      <td>0.2146</td>
     </tr>
     <tr>
       <th>2</th>
       <td>4</td>
-      <td>874.2247</td>
-      <td>0.1844</td>
+      <td>955.1301</td>
+      <td>0.1887</td>
     </tr>
     <tr>
       <th>3</th>
       <td>5</td>
-      <td>815.8860</td>
-      <td>0.1652</td>
+      <td>891.9650</td>
+      <td>0.1762</td>
     </tr>
     <tr>
       <th>4</th>
       <td>6</td>
-      <td>762.4217</td>
-      <td>0.1771</td>
+      <td>843.0145</td>
+      <td>0.1750</td>
     </tr>
     <tr>
       <th>5</th>
       <td>7</td>
-      <td>718.2347</td>
-      <td>0.1882</td>
+      <td>798.7791</td>
+      <td>0.1341</td>
     </tr>
     <tr>
       <th>6</th>
       <td>8</td>
-      <td>678.8433</td>
-      <td>0.1585</td>
+      <td>758.0470</td>
+      <td>0.1413</td>
     </tr>
     <tr>
       <th>7</th>
       <td>9</td>
-      <td>636.1460</td>
-      <td>0.1679</td>
+      <td>714.1712</td>
+      <td>0.1503</td>
     </tr>
   </tbody>
 </table>
@@ -4939,7 +5200,7 @@ cancer_death_rate_bisecting_kmeans_clustering.head()
       <td>-0.6095</td>
       <td>-0.9258</td>
       <td>1.4059</td>
-      <td>0</td>
+      <td>1</td>
     </tr>
     <tr>
       <th>1</th>
@@ -4952,7 +5213,7 @@ cancer_death_rate_bisecting_kmeans_clustering.head()
       <td>0.8754</td>
       <td>-0.7177</td>
       <td>0.8924</td>
-      <td>1</td>
+      <td>0</td>
     </tr>
     <tr>
       <th>2</th>
@@ -4965,7 +5226,20 @@ cancer_death_rate_bisecting_kmeans_clustering.head()
       <td>-0.9625</td>
       <td>-1.0428</td>
       <td>-1.1914</td>
-      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.0691</td>
+      <td>-0.3352</td>
+      <td>-0.8866</td>
+      <td>-0.1990</td>
+      <td>0.0272</td>
+      <td>1.2933</td>
+      <td>1.3658</td>
+      <td>1.5903</td>
+      <td>1.3091</td>
+      <td>0</td>
     </tr>
     <tr>
       <th>4</th>
@@ -4978,20 +5252,7 @@ cancer_death_rate_bisecting_kmeans_clustering.head()
       <td>-0.2718</td>
       <td>-0.5826</td>
       <td>-0.8379</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>2.1397</td>
-      <td>1.3384</td>
-      <td>0.2846</td>
-      <td>0.3752</td>
-      <td>-0.1795</td>
-      <td>0.1509</td>
-      <td>-1.1314</td>
-      <td>0.7189</td>
-      <td>-0.6376</td>
-      <td>0</td>
+      <td>1</td>
     </tr>
   </tbody>
 </table>
@@ -5007,6 +5268,8 @@ cancer_death_rate_bisecting_kmeans_clustering.head()
 ##################################
 cancer_death_rate_bisecting_kmeans_clustering_plot = sns.pairplot(cancer_death_rate_bisecting_kmeans_clustering,
                                                                   kind='reg',
+                                                                  markers=["o", "s"],
+                                                                  plot_kws={'scatter_kws': {'alpha': 0.3}},
                                                                   hue='BISECTING_KMEANS_CLUSTER');
 sns.move_legend(cancer_death_rate_bisecting_kmeans_clustering_plot, 
                 "lower center",
@@ -5084,42 +5347,42 @@ gaussian_mixture_clustering_evaluation_summary
     <tr>
       <th>0</th>
       <td>2</td>
-      <td>0.1745</td>
+      <td>0.2239</td>
     </tr>
     <tr>
       <th>1</th>
       <td>3</td>
-      <td>0.1136</td>
+      <td>0.2235</td>
     </tr>
     <tr>
       <th>2</th>
       <td>4</td>
-      <td>0.1233</td>
+      <td>0.2026</td>
     </tr>
     <tr>
       <th>3</th>
       <td>5</td>
-      <td>0.1094</td>
+      <td>0.1205</td>
     </tr>
     <tr>
       <th>4</th>
       <td>6</td>
-      <td>0.1162</td>
+      <td>0.1208</td>
     </tr>
     <tr>
       <th>5</th>
       <td>7</td>
-      <td>0.1141</td>
+      <td>0.1266</td>
     </tr>
     <tr>
       <th>6</th>
       <td>8</td>
-      <td>0.0806</td>
+      <td>0.1320</td>
     </tr>
     <tr>
       <th>7</th>
       <td>9</td>
-      <td>0.0863</td>
+      <td>0.1348</td>
     </tr>
   </tbody>
 </table>
@@ -5228,7 +5491,7 @@ cancer_death_rate_gaussian_mixture_clustering.head()
       <td>-0.6095</td>
       <td>-0.9258</td>
       <td>1.4059</td>
-      <td>0</td>
+      <td>1</td>
     </tr>
     <tr>
       <th>1</th>
@@ -5254,7 +5517,20 @@ cancer_death_rate_gaussian_mixture_clustering.head()
       <td>-0.9625</td>
       <td>-1.0428</td>
       <td>-1.1914</td>
-      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.0691</td>
+      <td>-0.3352</td>
+      <td>-0.8866</td>
+      <td>-0.1990</td>
+      <td>0.0272</td>
+      <td>1.2933</td>
+      <td>1.3658</td>
+      <td>1.5903</td>
+      <td>1.3091</td>
+      <td>0</td>
     </tr>
     <tr>
       <th>4</th>
@@ -5267,20 +5543,7 @@ cancer_death_rate_gaussian_mixture_clustering.head()
       <td>-0.2718</td>
       <td>-0.5826</td>
       <td>-0.8379</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>2.1397</td>
-      <td>1.3384</td>
-      <td>0.2846</td>
-      <td>0.3752</td>
-      <td>-0.1795</td>
-      <td>0.1509</td>
-      <td>-1.1314</td>
-      <td>0.7189</td>
-      <td>-0.6376</td>
-      <td>0</td>
+      <td>1</td>
     </tr>
   </tbody>
 </table>
@@ -5296,6 +5559,8 @@ cancer_death_rate_gaussian_mixture_clustering.head()
 ##################################
 cancer_death_rate_gaussian_mixture_clustering_plot = sns.pairplot(cancer_death_rate_gaussian_mixture_clustering,
                                                                   kind='reg',
+                                                                  markers=["o", "s"],
+                                                                  plot_kws={'scatter_kws': {'alpha': 0.3}},
                                                                   hue='GMM_CLUSTER');
 sns.move_legend(cancer_death_rate_gaussian_mixture_clustering_plot, 
                 "lower center",
@@ -5372,42 +5637,42 @@ agglomerative_clustering_evaluation_summary
     <tr>
       <th>0</th>
       <td>2</td>
-      <td>0.1224</td>
+      <td>0.1629</td>
     </tr>
     <tr>
       <th>1</th>
       <td>3</td>
-      <td>0.1236</td>
+      <td>0.1311</td>
     </tr>
     <tr>
       <th>2</th>
       <td>4</td>
-      <td>0.1169</td>
+      <td>0.1127</td>
     </tr>
     <tr>
       <th>3</th>
       <td>5</td>
-      <td>0.1770</td>
+      <td>0.1617</td>
     </tr>
     <tr>
       <th>4</th>
       <td>6</td>
-      <td>0.1710</td>
+      <td>0.2035</td>
     </tr>
     <tr>
       <th>5</th>
       <td>7</td>
-      <td>0.1779</td>
+      <td>0.1995</td>
     </tr>
     <tr>
       <th>6</th>
       <td>8</td>
-      <td>0.2015</td>
+      <td>0.2006</td>
     </tr>
     <tr>
       <th>7</th>
       <td>9</td>
-      <td>0.2035</td>
+      <td>0.1968</td>
     </tr>
   </tbody>
 </table>
@@ -5513,7 +5778,7 @@ cancer_death_rate_agglomerative_clustering.head()
       <td>-0.6095</td>
       <td>-0.9258</td>
       <td>1.4059</td>
-      <td>0</td>
+      <td>1</td>
     </tr>
     <tr>
       <th>1</th>
@@ -5526,7 +5791,7 @@ cancer_death_rate_agglomerative_clustering.head()
       <td>0.8754</td>
       <td>-0.7177</td>
       <td>0.8924</td>
-      <td>0</td>
+      <td>1</td>
     </tr>
     <tr>
       <th>2</th>
@@ -5542,6 +5807,19 @@ cancer_death_rate_agglomerative_clustering.head()
       <td>0</td>
     </tr>
     <tr>
+      <th>3</th>
+      <td>0.0691</td>
+      <td>-0.3352</td>
+      <td>-0.8866</td>
+      <td>-0.1990</td>
+      <td>0.0272</td>
+      <td>1.2933</td>
+      <td>1.3658</td>
+      <td>1.5903</td>
+      <td>1.3091</td>
+      <td>1</td>
+    </tr>
+    <tr>
       <th>4</th>
       <td>0.5801</td>
       <td>0.3703</td>
@@ -5552,19 +5830,6 @@ cancer_death_rate_agglomerative_clustering.head()
       <td>-0.2718</td>
       <td>-0.5826</td>
       <td>-0.8379</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>2.1397</td>
-      <td>1.3384</td>
-      <td>0.2846</td>
-      <td>0.3752</td>
-      <td>-0.1795</td>
-      <td>0.1509</td>
-      <td>-1.1314</td>
-      <td>0.7189</td>
-      <td>-0.6376</td>
       <td>0</td>
     </tr>
   </tbody>
@@ -5581,6 +5846,8 @@ cancer_death_rate_agglomerative_clustering.head()
 ##################################
 cancer_death_rate_agglomerative_clustering_plot = sns.pairplot(cancer_death_rate_agglomerative_clustering,
                                                                kind='reg',
+                                                               markers=['o', 's'],
+                                                               plot_kws={'scatter_kws': {'alpha': 0.3}},
                                                                hue='AGGLOMERATIVE_CLUSTER');
 sns.move_legend(cancer_death_rate_agglomerative_clustering_plot, 
                 "lower center",
@@ -5657,42 +5924,42 @@ ward_hierarchical_clustering_evaluation_summary
     <tr>
       <th>0</th>
       <td>2</td>
-      <td>0.2150</td>
+      <td>0.2148</td>
     </tr>
     <tr>
       <th>1</th>
       <td>3</td>
-      <td>0.2043</td>
+      <td>0.1924</td>
     </tr>
     <tr>
       <th>2</th>
       <td>4</td>
-      <td>0.1850</td>
+      <td>0.1840</td>
     </tr>
     <tr>
       <th>3</th>
       <td>5</td>
-      <td>0.1969</td>
+      <td>0.1714</td>
     </tr>
     <tr>
       <th>4</th>
       <td>6</td>
-      <td>0.1890</td>
+      <td>0.1858</td>
     </tr>
     <tr>
       <th>5</th>
       <td>7</td>
-      <td>0.2024</td>
+      <td>0.1803</td>
     </tr>
     <tr>
       <th>6</th>
       <td>8</td>
-      <td>0.2077</td>
+      <td>0.1595</td>
     </tr>
     <tr>
       <th>7</th>
       <td>9</td>
-      <td>0.1659</td>
+      <td>0.1689</td>
     </tr>
   </tbody>
 </table>
@@ -5798,7 +6065,7 @@ cancer_death_rate_ward_hierarchical_clustering.head()
       <td>-0.6095</td>
       <td>-0.9258</td>
       <td>1.4059</td>
-      <td>0</td>
+      <td>1</td>
     </tr>
     <tr>
       <th>1</th>
@@ -5811,7 +6078,7 @@ cancer_death_rate_ward_hierarchical_clustering.head()
       <td>0.8754</td>
       <td>-0.7177</td>
       <td>0.8924</td>
-      <td>0</td>
+      <td>1</td>
     </tr>
     <tr>
       <th>2</th>
@@ -5827,6 +6094,19 @@ cancer_death_rate_ward_hierarchical_clustering.head()
       <td>0</td>
     </tr>
     <tr>
+      <th>3</th>
+      <td>0.0691</td>
+      <td>-0.3352</td>
+      <td>-0.8866</td>
+      <td>-0.1990</td>
+      <td>0.0272</td>
+      <td>1.2933</td>
+      <td>1.3658</td>
+      <td>1.5903</td>
+      <td>1.3091</td>
+      <td>1</td>
+    </tr>
+    <tr>
       <th>4</th>
       <td>0.5801</td>
       <td>0.3703</td>
@@ -5837,19 +6117,6 @@ cancer_death_rate_ward_hierarchical_clustering.head()
       <td>-0.2718</td>
       <td>-0.5826</td>
       <td>-0.8379</td>
-      <td>1</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>2.1397</td>
-      <td>1.3384</td>
-      <td>0.2846</td>
-      <td>0.3752</td>
-      <td>-0.1795</td>
-      <td>0.1509</td>
-      <td>-1.1314</td>
-      <td>0.7189</td>
-      <td>-0.6376</td>
       <td>0</td>
     </tr>
   </tbody>
@@ -5866,6 +6133,8 @@ cancer_death_rate_ward_hierarchical_clustering.head()
 ##################################
 cancer_death_rate_ward_hierarchical_clustering_plot = sns.pairplot(cancer_death_rate_ward_hierarchical_clustering,
                                                                    kind='reg',
+                                                                   markers=["o", "s"],
+                                                                   plot_kws={'scatter_kws': {'alpha': 0.3}},
                                                                    hue='WARD_HIERARCHICAL_CLUSTER');
 sns.move_legend(cancer_death_rate_ward_hierarchical_clustering_plot, 
                 "lower center",
@@ -5936,27 +6205,27 @@ display(performance_comparison_silhouette_score)
     <tr>
       <th>0</th>
       <td>kmeans_clustering</td>
-      <td>0.2285</td>
+      <td>0.2355</td>
     </tr>
     <tr>
       <th>1</th>
       <td>bisecting_kmeans_clustering</td>
-      <td>0.2285</td>
+      <td>0.2355</td>
     </tr>
     <tr>
       <th>2</th>
       <td>gaussian_mixture_clustering</td>
-      <td>0.1745</td>
+      <td>0.2239</td>
     </tr>
     <tr>
       <th>3</th>
       <td>agglomerative_clustering</td>
-      <td>0.1224</td>
+      <td>0.1629</td>
     </tr>
     <tr>
       <th>4</th>
       <td>ward_hierarchical_clustering</td>
-      <td>0.1224</td>
+      <td>0.1629</td>
     </tr>
   </tbody>
 </table>
@@ -5978,7 +6247,7 @@ performance_comparison_silhouette_score_plot.set_ylabel("Clustering Model")
 performance_comparison_silhouette_score_plot.grid(False)
 performance_comparison_silhouette_score_plot.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
 for container in performance_comparison_silhouette_score_plot.containers:
-    performance_comparison_silhouette_score_plot.bar_label(container, fmt='%.5f', padding=-50)
+    performance_comparison_silhouette_score_plot.bar_label(container, fmt='%.5f', padding=-50, color='white', fontweight='bold')
 ```
 
 
@@ -6043,7 +6312,7 @@ cancer_death_rate_kmeans_clustering_descriptor.head()
       <td>-0.6095</td>
       <td>-0.9258</td>
       <td>1.4059</td>
-      <td>0</td>
+      <td>1</td>
     </tr>
     <tr>
       <th>1</th>
@@ -6056,7 +6325,7 @@ cancer_death_rate_kmeans_clustering_descriptor.head()
       <td>0.8754</td>
       <td>-0.7177</td>
       <td>0.8924</td>
-      <td>1</td>
+      <td>0</td>
     </tr>
     <tr>
       <th>2</th>
@@ -6069,7 +6338,20 @@ cancer_death_rate_kmeans_clustering_descriptor.head()
       <td>-0.9625</td>
       <td>-1.0428</td>
       <td>-1.1914</td>
-      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.0691</td>
+      <td>-0.3352</td>
+      <td>-0.8866</td>
+      <td>-0.1990</td>
+      <td>0.0272</td>
+      <td>1.2933</td>
+      <td>1.3658</td>
+      <td>1.5903</td>
+      <td>1.3091</td>
+      <td>0</td>
     </tr>
     <tr>
       <th>4</th>
@@ -6082,20 +6364,7 @@ cancer_death_rate_kmeans_clustering_descriptor.head()
       <td>-0.2718</td>
       <td>-0.5826</td>
       <td>-0.8379</td>
-      <td>0</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>2.1397</td>
-      <td>1.3384</td>
-      <td>0.2846</td>
-      <td>0.3752</td>
-      <td>-0.1795</td>
-      <td>0.1509</td>
-      <td>-1.1314</td>
-      <td>0.7189</td>
-      <td>-0.6376</td>
-      <td>0</td>
+      <td>1</td>
     </tr>
   </tbody>
 </table>
@@ -6111,6 +6380,8 @@ cancer_death_rate_kmeans_clustering_descriptor.head()
 ##################################
 cancer_death_rate_kmeans_clustering_descriptor_plot = sns.pairplot(cancer_death_rate_kmeans_clustering_descriptor,
                                                         kind='reg',
+                                                        markers=["o", "s"],
+                                                        plot_kws={'scatter_kws': {'alpha': 0.3}},
                                                         hue='KMEANS_CLUSTER');
 sns.move_legend(cancer_death_rate_kmeans_clustering_descriptor_plot, 
                 "lower center",
@@ -6130,6 +6401,7 @@ plt.show()
 # Computing the average descriptors
 # for each K-Means Cluster
 ##################################
+cancer_death_rate_kmeans_clustering_descriptor['KMEANS_CLUSTER'] = np.where(cancer_death_rate_kmeans_clustering_descriptor['KMEANS_CLUSTER']== 0,'HIGH_PAN_LUN_COL_LIV_CAN','HIGH_PRO_BRE_CER_STO_ESO_CAN')
 cancer_death_rate_kmeans_descriptor_clustered = cancer_death_rate_kmeans_clustering_descriptor.groupby('KMEANS_CLUSTER').mean()
 display(cancer_death_rate_kmeans_descriptor_clustered)
 ```
@@ -6178,28 +6450,28 @@ display(cancer_death_rate_kmeans_descriptor_clustered)
   </thead>
   <tbody>
     <tr>
-      <th>0</th>
-      <td>0.3716</td>
-      <td>0.0735</td>
-      <td>0.6960</td>
-      <td>0.4020</td>
-      <td>0.4186</td>
-      <td>-0.5487</td>
-      <td>-0.6455</td>
-      <td>-0.5991</td>
-      <td>-0.0689</td>
+      <th>HIGH_PAN_LUN_COL_LIV_CAN</th>
+      <td>-0.4004</td>
+      <td>-0.0894</td>
+      <td>-0.7876</td>
+      <td>-0.4930</td>
+      <td>-0.4541</td>
+      <td>0.6040</td>
+      <td>0.7054</td>
+      <td>0.6445</td>
+      <td>0.0465</td>
     </tr>
     <tr>
-      <th>1</th>
-      <td>-0.4235</td>
-      <td>-0.1064</td>
-      <td>-0.7812</td>
-      <td>-0.4948</td>
-      <td>-0.4857</td>
-      <td>0.5787</td>
-      <td>0.6887</td>
-      <td>0.5947</td>
-      <td>0.0770</td>
+      <th>HIGH_PRO_BRE_CER_STO_ESO_CAN</th>
+      <td>0.3550</td>
+      <td>0.0793</td>
+      <td>0.6983</td>
+      <td>0.4371</td>
+      <td>0.4026</td>
+      <td>-0.5355</td>
+      <td>-0.6254</td>
+      <td>-0.5714</td>
+      <td>-0.0413</td>
     </tr>
   </tbody>
 </table>
@@ -6213,8 +6485,8 @@ display(cancer_death_rate_kmeans_descriptor_clustered)
 # clustering descriptors
 # for each K-Means Cluster
 ##################################
-plt.figure(figsize=(10, 6))
-sns.heatmap(cancer_death_rate_kmeans_descriptor_clustered, annot=True, cmap="rocket_r")
+plt.figure(figsize=(10, 8))
+sns.heatmap(cancer_death_rate_kmeans_descriptor_clustered, annot=True, cmap="seismic")
 plt.xlabel('Cancer Types')
 plt.ylabel('K-Means Clusters')
 plt.title('Heatmap of Death Rates by Cancer Type and K-Means Clusters')
@@ -6235,6 +6507,7 @@ plt.show()
 # and K-Means clusters
 ##################################
 cancer_death_rate_kmeans_clustering_target = pd.concat([cancer_death_rate_kmeans_clustering[['KMEANS_CLUSTER']],cancer_death_rate_preprocessed[['SMPREV','OWPREV','ACSHAR']]], axis=1, join='inner')
+cancer_death_rate_kmeans_clustering_target['KMEANS_CLUSTER'] = np.where(cancer_death_rate_kmeans_clustering_target['KMEANS_CLUSTER']== 0,'HIGH_PAN_LUN_COL_LIV_CAN','HIGH_PRO_BRE_CER_STO_ESO_CAN')
 cancer_death_rate_kmeans_clustering_target.head()
 ```
 
@@ -6268,38 +6541,38 @@ cancer_death_rate_kmeans_clustering_target.head()
   <tbody>
     <tr>
       <th>0</th>
-      <td>0</td>
+      <td>HIGH_PRO_BRE_CER_STO_ESO_CAN</td>
       <td>-0.5405</td>
       <td>-1.4979</td>
       <td>-1.6782</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>1</td>
+      <td>HIGH_PAN_LUN_COL_LIV_CAN</td>
       <td>0.5329</td>
       <td>0.6090</td>
       <td>0.4008</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>1</td>
+      <td>HIGH_PAN_LUN_COL_LIV_CAN</td>
       <td>-0.6438</td>
       <td>0.9033</td>
       <td>-1.3345</td>
     </tr>
     <tr>
+      <th>3</th>
+      <td>HIGH_PAN_LUN_COL_LIV_CAN</td>
+      <td>1.1517</td>
+      <td>1.0213</td>
+      <td>1.1371</td>
+    </tr>
+    <tr>
       <th>4</th>
-      <td>0</td>
+      <td>HIGH_PRO_BRE_CER_STO_ESO_CAN</td>
       <td>-1.0431</td>
       <td>-1.2574</td>
       <td>0.3520</td>
-    </tr>
-    <tr>
-      <th>5</th>
-      <td>0</td>
-      <td>-2.1494</td>
-      <td>-0.0314</td>
-      <td>0.2304</td>
     </tr>
   </tbody>
 </table>
@@ -6349,16 +6622,16 @@ display(cancer_death_rate_kmeans_target_clustered)
   </thead>
   <tbody>
     <tr>
-      <th>0</th>
-      <td>-0.6029</td>
-      <td>-0.4069</td>
-      <td>-0.3014</td>
+      <th>HIGH_PAN_LUN_COL_LIV_CAN</th>
+      <td>0.6433</td>
+      <td>0.4329</td>
+      <td>0.3218</td>
     </tr>
     <tr>
-      <th>1</th>
-      <td>0.6519</td>
-      <td>0.3761</td>
-      <td>0.2587</td>
+      <th>HIGH_PRO_BRE_CER_STO_ESO_CAN</th>
+      <td>-0.5704</td>
+      <td>-0.3838</td>
+      <td>-0.2853</td>
     </tr>
   </tbody>
 </table>
@@ -6372,8 +6645,8 @@ display(cancer_death_rate_kmeans_target_clustered)
 # target descriptors
 # for each K-Means Cluster
 ##################################
-plt.figure(figsize=(10, 6))
-sns.heatmap(cancer_death_rate_kmeans_target_clustered, annot=True, cmap="rocket_r")
+plt.figure(figsize=(10, 8))
+sns.heatmap(cancer_death_rate_kmeans_target_clustered, annot=True, cmap="seismic")
 plt.xlabel('Lifestyle Factors')
 plt.ylabel('K-Means Clusters')
 plt.title('Heatmap of Lifestyle Factors and K-Means Clusters')
@@ -6383,6 +6656,401 @@ plt.show()
 
     
 ![png](output_200_0.png)
+    
+
+
+
+```python
+##################################
+# Exploring the selected final model
+# using the location data
+# and K-Means clusters
+##################################
+cancer_death_rate_kmeans_cluster_map = pd.concat([cancer_death_rate_kmeans_clustering_target[['KMEANS_CLUSTER']],cancer_death_rate_filtered_row[['CODE']]], axis=1, join='inner')
+cancer_death_rate_kmeans_cluster_map.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>KMEANS_CLUSTER</th>
+      <th>CODE</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>HIGH_PRO_BRE_CER_STO_ESO_CAN</td>
+      <td>AFG</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>HIGH_PAN_LUN_COL_LIV_CAN</td>
+      <td>ALB</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>HIGH_PAN_LUN_COL_LIV_CAN</td>
+      <td>DZA</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>HIGH_PAN_LUN_COL_LIV_CAN</td>
+      <td>AND</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>HIGH_PRO_BRE_CER_STO_ESO_CAN</td>
+      <td>AGO</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+##################################
+# Loading world map shapefile 
+# obtained from https://geojson-maps.ash.ms/
+##################################
+world = gpd.read_file('custom.geo.json')
+```
+
+
+```python
+##################################
+# Merging the GeoDataFrame 
+# with world map using country codes
+##################################
+world_cluster = world.merge(cancer_death_rate_kmeans_cluster_map, left_on='gu_a3', right_on='CODE', how='left')
+```
+
+
+```python
+##################################
+# Plotting the map by K-Means cluster
+##################################
+fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+world_cluster.boundary.plot(ax=ax, linewidth=1) 
+world_cluster.plot(column='KMEANS_CLUSTER', cmap="seismic", legend=True, ax=ax, legend_kwds={"loc": "center left", "bbox_to_anchor": (1, 0.5)})
+plt.title('KMEANS_CLUSTER')
+plt.show()
+```
+
+
+    
+![png](output_204_0.png)
+    
+
+
+
+```python
+##################################
+# Plotting the map by K-Means descriptors
+##################################
+cancer_death_rate_kmeans_descriptor_map = pd.concat([cancer_death_rate_kmeans_clustering_descriptor,cancer_death_rate_filtered_row[['CODE']]], axis=1, join='inner')
+cancer_death_rate_kmeans_descriptor_map.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PROCAN</th>
+      <th>BRECAN</th>
+      <th>CERCAN</th>
+      <th>STOCAN</th>
+      <th>ESOCAN</th>
+      <th>PANCAN</th>
+      <th>LUNCAN</th>
+      <th>COLCAN</th>
+      <th>LIVCAN</th>
+      <th>KMEANS_CLUSTER</th>
+      <th>CODE</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-0.6922</td>
+      <td>-0.4550</td>
+      <td>-0.1771</td>
+      <td>2.0964</td>
+      <td>0.9425</td>
+      <td>-1.4794</td>
+      <td>-0.6095</td>
+      <td>-0.9258</td>
+      <td>1.4059</td>
+      <td>HIGH_PRO_BRE_CER_STO_ESO_CAN</td>
+      <td>AFG</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>-0.0867</td>
+      <td>-1.3608</td>
+      <td>-1.1020</td>
+      <td>0.3084</td>
+      <td>-1.4329</td>
+      <td>0.2506</td>
+      <td>0.8754</td>
+      <td>-0.7177</td>
+      <td>0.8924</td>
+      <td>HIGH_PAN_LUN_COL_LIV_CAN</td>
+      <td>ALB</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-1.0261</td>
+      <td>-0.8704</td>
+      <td>-0.8184</td>
+      <td>-1.2331</td>
+      <td>-1.8001</td>
+      <td>-0.6858</td>
+      <td>-0.9625</td>
+      <td>-1.0428</td>
+      <td>-1.1914</td>
+      <td>HIGH_PAN_LUN_COL_LIV_CAN</td>
+      <td>DZA</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.0691</td>
+      <td>-0.3352</td>
+      <td>-0.8866</td>
+      <td>-0.1990</td>
+      <td>0.0272</td>
+      <td>1.2933</td>
+      <td>1.3658</td>
+      <td>1.5903</td>
+      <td>1.3091</td>
+      <td>HIGH_PAN_LUN_COL_LIV_CAN</td>
+      <td>AND</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.5801</td>
+      <td>0.3703</td>
+      <td>1.0686</td>
+      <td>-0.0427</td>
+      <td>1.2150</td>
+      <td>-1.1052</td>
+      <td>-0.2718</td>
+      <td>-0.5826</td>
+      <td>-0.8379</td>
+      <td>HIGH_PRO_BRE_CER_STO_ESO_CAN</td>
+      <td>AGO</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+##################################
+# Merging the GeoDataFrame 
+# with world map using country codes
+##################################
+world_descriptor = world.merge(cancer_death_rate_kmeans_descriptor_map, left_on='gu_a3', right_on='CODE', how='left')
+```
+
+
+```python
+##################################
+# Plotting the map by Pancreatic Cancer Death Rate
+##################################
+fig, ax = plt.subplots(1, 1, figsize=(12.5, 7))
+world_descriptor.boundary.plot(ax=ax, linewidth=1) 
+world_descriptor.plot(column='PANCAN', cmap="seismic", legend=True, ax=ax, legend_kwds={'label': "PANCAN"})
+plt.title('PANCAN')
+plt.show()
+```
+
+
+    
+![png](output_207_0.png)
+    
+
+
+
+```python
+##################################
+# Plotting the map by Lung Cancer Death Rate
+##################################
+fig, ax = plt.subplots(1, 1, figsize=(12.5, 7.5))
+world_descriptor.boundary.plot(ax=ax, linewidth=1) 
+world_descriptor.plot(column='LUNCAN', cmap="seismic", legend=True, ax=ax, legend_kwds={'label': "LUNCAN"})
+plt.title('LUNCAN')
+plt.show()
+```
+
+
+    
+![png](output_208_0.png)
+    
+
+
+
+```python
+##################################
+# Plotting the map by Colon Cancer Death Rate
+##################################
+fig, ax = plt.subplots(1, 1, figsize=(12.5, 7.5))
+world_descriptor.boundary.plot(ax=ax, linewidth=1) 
+world_descriptor.plot(column='COLCAN', cmap="seismic", legend=True, ax=ax, legend_kwds={'label': "COLCAN"})
+plt.title('COLCAN')
+plt.show()
+```
+
+
+    
+![png](output_209_0.png)
+    
+
+
+
+```python
+##################################
+# Plotting the map by Liver Cancer Death Rate
+##################################
+fig, ax = plt.subplots(1, 1, figsize=(12.5, 7.5))
+world_descriptor.boundary.plot(ax=ax, linewidth=1) 
+world_descriptor.plot(column='LIVCAN', cmap="seismic", legend=True, ax=ax, legend_kwds={'label': "LIVCAN"})
+plt.title('LIVCAN')
+plt.show()
+```
+
+
+    
+![png](output_210_0.png)
+    
+
+
+
+```python
+##################################
+# Plotting the map by Prostate Cancer Death Rate
+##################################
+fig, ax = plt.subplots(1, 1, figsize=(12.5, 7.5))
+world_descriptor.boundary.plot(ax=ax, linewidth=1) 
+world_descriptor.plot(column='PROCAN', cmap="seismic", legend=True, ax=ax, legend_kwds={'label': "PROCAN"})
+plt.title('PROCAN')
+plt.show()
+```
+
+
+    
+![png](output_211_0.png)
+    
+
+
+
+```python
+##################################
+# Plotting the map by Breast Cancer Death Rate
+##################################
+fig, ax = plt.subplots(1, 1, figsize=(12.5, 7.5))
+world_descriptor.boundary.plot(ax=ax, linewidth=1) 
+world_descriptor.plot(column='BRECAN', cmap="seismic", legend=True, ax=ax, legend_kwds={'label': "BRECAN"})
+plt.title('BRECAN')
+plt.show()
+```
+
+
+    
+![png](output_212_0.png)
+    
+
+
+
+```python
+##################################
+# Plotting the map by Cervical Cancer Death Rate
+##################################
+fig, ax = plt.subplots(1, 1, figsize=(12.5, 7.5))
+world_descriptor.boundary.plot(ax=ax, linewidth=1) 
+world_descriptor.plot(column='CERCAN', cmap="seismic", legend=True, ax=ax, legend_kwds={'label': "CERCAN"})
+plt.title('CERCAN')
+plt.show()
+```
+
+
+    
+![png](output_213_0.png)
+    
+
+
+
+```python
+##################################
+# Plotting the map by Stomach Cancer Death Rate
+##################################
+fig, ax = plt.subplots(1, 1, figsize=(12.5, 7.5))
+world_descriptor.boundary.plot(ax=ax, linewidth=1) 
+world_descriptor.plot(column='STOCAN', cmap="seismic", legend=True, ax=ax, legend_kwds={'label': "STOCAN"})
+plt.title('STOCAN')
+plt.show()
+```
+
+
+    
+![png](output_214_0.png)
+    
+
+
+
+```python
+##################################
+# Plotting the map by Esophagus Cancer Death Rate
+##################################
+fig, ax = plt.subplots(1, 1, figsize=(12.5, 7.5))
+world_descriptor.boundary.plot(ax=ax, linewidth=1) 
+world_descriptor.plot(column='ESOCAN', cmap="seismic", legend=True, ax=ax, legend_kwds={'label': "ESOCAN"})
+plt.title('ESOCAN')
+plt.show()
+```
+
+
+    
+![png](output_215_0.png)
     
 
 
@@ -6458,7 +7126,7 @@ A detailed report was formulated documenting all the analysis steps and findings
 * **[Article]** [Clustering Metrics Better Than the Elbow Method](https://www.kdnuggets.com/2019/10/clustering-metrics-better-elbow-method.html) by Tirthajyoti Sarkar (KD Nuggets)
 * **[Article]** [Practical Implementation Of K-means, Hierarchical, and DBSCAN Clustering On Dataset With Hyperparameter Optimization](https://medium.com/analytics-vidhya/practical-implementation-of-k-means-hierarchical-and-dbscan-clustering-on-dataset-with-bd7f3d13ef7f) by Janibasha Shaik (Towards Data Science)
 * **[Article]** [KMeans Hyper-parameters Explained with Examples](https://towardsdatascience.com/kmeans-hyper-parameters-explained-with-examples-c93505820cd3) by Sujeewa Kumaratunga (Towards Data Science)
-* **[Article]** [KMeans Silhouette Score Python Exampley](https://vitalflux.com/kmeans-silhouette-score-explained-with-python-example/#google_vignette) by Ajitesh Kumar (Analytics Yogi)
+* **[Article]** [KMeans Silhouette Score Python Examples](https://vitalflux.com/kmeans-silhouette-score-explained-with-python-example/#google_vignette) by Ajitesh Kumar (Analytics Yogi)
 
 
 
