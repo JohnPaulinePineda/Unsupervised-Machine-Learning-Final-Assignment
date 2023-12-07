@@ -25,7 +25,7 @@
         * [1.6.1 Premodelling Data Description](#1.6.1)
         * [1.6.2 K-Means Clustering](#1.6.2)
         * [1.6.3 Bisecting K-Means Clustering](#1.6.3)
-        * [1.6.4 Gaussian Mixture Model Clustering](#1.6.4)
+        * [1.6.4 Gaussian Mixture Clustering](#1.6.4)
         * [1.6.5 Agglomerative Clustering](#1.6.5)
         * [1.6.6 Ward Hierarchical Clustering](#1.6.6)
     * [1.7 Consolidated Findings](#1.7)   
@@ -4620,6 +4620,22 @@ cancer_death_rate_premodelling_clustering.head()
 
 ### 1.6.2 K-Means Clustering <a class="anchor" id="1.6.2"></a>
 
+[K-Means Clustering](https://onlinelibrary.wiley.com/doi/book/10.1002/9780470316801) groups similar data points together into clusters by minimizing the mean distance between geometric points. The algorithm iteratively partitions data sets into a fixed number of non-overlapping k subgroups or clusters wherein each data point belongs to the cluster with the nearest mean cluster center. The process begins by initializing all the coordinates into a pre-defined k number of cluster centers. With every pass of the algorithm, each point is assigned to its nearest cluster center. The cluster centers are then updated to be the centers of all the points assigned to it in that pass. This is performed by re-calculating the cluster centers as the average of the points in each respective cluster. The algorithm repeats until there’s a minimum change of the cluster centers from the last iteration.
+
+[Silhouette Score](https://www.packtpub.com/product/training-systems-using-python-statistical-modeling/9781838823733) assesses the quality of clusters created by a clustering algorithm. It measures how well-separated the clusters are and how similar each data point in a cluster is to the other points in the same cluster compared to the nearest neighboring cluster. The silhouette score ranges from -1 to 1, where a higher value indicates better-defined clusters. The silhouette method requires the computation of the silhouette scores for each data point which is the average dissimilarity of the data point with all other data points in the next-nearest cluster minus the average dissimilarity of the data point to points in the same cluster and divided by the larger of the two numbers. The overall silhouette score for the clustering is the average of the silhouette scores for all data points.
+
+1. The [k-means clustering model](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html#sklearn.cluster.KMeans) from the <mark style="background-color: #CCECFF"><b>sklearn.cluster</b></mark> Python library API was implemented. 
+2. The model contains 3 hyperparameters:
+    * <span style="color: #FF0000">n_clusters</span> = number of clusters to form as well as the number of centroids to generate made to vary between 2 to 9
+    * <span style="color: #FF0000">n_init</span> = number of times the k-means algorithm is run with different centroid seeds held constant at a value of auto
+    * <span style="color: #FF0000">init</span> = method for initialization held constant at a value equal to k-means++
+3. Hyperparameter tuning was conducted on the data with optimal model performance using the silhouette score determined for: 
+    * <span style="color: #FF0000">n_clusters</span> = 2
+    * <span style="color: #FF0000">n_init</span> = auto
+    * <span style="color: #FF0000">init</span> = k-means++
+5. The apparent model performance of the optimal model is summarized as follows:
+    * **Silhouette Score** = 0.2355
+
 
 
 ```python
@@ -4953,6 +4969,23 @@ plt.show()
 
 ### 1.6.3 Bisecting K-Means Clustering <a class="anchor" id="1.6.3"></a>
 
+[Bisecting K-Means Clustering](https://www.semanticscholar.org/paper/A-Comparison-of-Document-Clustering-Techniques-Steinbach-Karypis/9378a3797d5f815babe7b392a199ea9d8d4f1dcf) is a variant of the traditional K-Means algorithm which iteratively splits clusters into two parts until the desired number of clusters is reached. It is a hierarchical clustering approach that uses a divisive strategy to build a hierarchy of clusters. The algorithm starts with the entire dataset as the initial cluster. The standard K-Means algorithm is implemented to the selected cluster, splitting it into two sub-clusters. Both steps are repeated until the desired number of clusters is reached. In cases when there are multiple clusters present, the algorithm selects the cluster with the largest variance. This results in a hierarchical structure of clusters, and the process can be stopped at any desired level of granularity.
+
+[Silhouette Score](https://www.packtpub.com/product/training-systems-using-python-statistical-modeling/9781838823733) assesses the quality of clusters created by a clustering algorithm. It measures how well-separated the clusters are and how similar each data point in a cluster is to the other points in the same cluster compared to the nearest neighboring cluster. The silhouette score ranges from -1 to 1, where a higher value indicates better-defined clusters. The silhouette method requires the computation of the silhouette scores for each data point which is the average dissimilarity of the data point with all other data points in the next-nearest cluster minus the average dissimilarity of the data point to points in the same cluster and divided by the larger of the two numbers. The overall silhouette score for the clustering is the average of the silhouette scores for all data points.
+
+1. The [bisecting k-means clustering model](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.BisectingKMeans.html#sklearn.cluster.BisectingKMeans) from the <mark style="background-color: #CCECFF"><b>sklearn.cluster</b></mark> Python library API was implemented. 
+2. The model contains 3 hyperparameters:
+    * <span style="color: #FF0000">n_clusters</span> = number of clusters to form as well as the number of centroids to generate made to vary between 2 to 9
+    * <span style="color: #FF0000">n_init</span> = number of time the inner k-means algorithm will be run with different centroid seeds in each bisection held constant at a value of 1
+    * <span style="color: #FF0000">init</span> = method for initialization held constant at a value equal to k-means++
+3. Hyperparameter tuning was conducted on the data with optimal model performance using the silhouette score determined for: 
+    * <span style="color: #FF0000">n_clusters</span> = 2
+    * <span style="color: #FF0000">n_init</span> = 1
+    * <span style="color: #FF0000">init</span> = k-means++
+5. The apparent model performance of the optimal model is summarized as follows:
+    * **Silhouette Score** = 0.2355
+    
+
 
 ```python
 ##################################
@@ -5283,7 +5316,26 @@ plt.show()
     
 
 
-### 1.6.4 Gaussian Mixture Model Clustering <a class="anchor" id="1.6.4"></a>
+### 1.6.4 Gaussian Mixture Clustering <a class="anchor" id="1.6.4"></a>
+
+[Gaussian Mixture Clustering](https://www.semanticscholar.org/paper/A-Comparison-of-Document-Clustering-Techniques-Steinbach-Karypis/9378a3797d5f815babe7b392a199ea9d8d4f1dcf) is a probabilistic model that assumes all the data points are generated from a mixture of a finite number of Gaussian distributions with unknown parameters incorporating information about the covariance structure of the data as well as the centers of the latent Gaussians. The algorithm involves initializing the parameters of the Gaussian components using K-means clustering to get initial estimates for the means and the identity matrix as a starting point for the covariance matrices. The expectation-maximization process is applied by calculating the probability of each data point belonging to each Gaussian component using the Bayes' theorem for the expectation step, and updating the parameters of the Gaussian components based on the weighted sum of the data points based on the probabilities determined for the maximization step. Convergence is checked by evaluating whether the log-likelihood of the data has stabilized or reached a maximum. Both steps are iterated until the criteria is met. After convergence, each data point is assigned to the cluster with the highest probability.
+
+[Silhouette Score](https://www.packtpub.com/product/training-systems-using-python-statistical-modeling/9781838823733) assesses the quality of clusters created by a clustering algorithm. It measures how well-separated the clusters are and how similar each data point in a cluster is to the other points in the same cluster compared to the nearest neighboring cluster. The silhouette score ranges from -1 to 1, where a higher value indicates better-defined clusters. The silhouette method requires the computation of the silhouette scores for each data point which is the average dissimilarity of the data point with all other data points in the next-nearest cluster minus the average dissimilarity of the data point to points in the same cluster and divided by the larger of the two numbers. The overall silhouette score for the clustering is the average of the silhouette scores for all data points.
+
+1. The [gaussian mixture clustering model](https://scikit-learn.org/stable/modules/generated/sklearn.mixture.GaussianMixture.html#sklearn.mixture.GaussianMixture) from the <mark style="background-color: #CCECFF"><b>sklearn.mixture</b></mark> Python library API was implemented. 
+2. The model contains 4 hyperparameters:
+    * <span style="color: #FF0000">n_components</span> = number of mixture components made to vary between 2 to 9
+    * <span style="color: #FF0000">covariance_type</span> = type of covariance parameters to use held constant at a value equal to full (each component has its own general covariance matrix)
+    * <span style="color: #FF0000">init_params</span> = method for initialization held constant at a value equal to k-means++
+    * <span style="color: #FF0000">tol</span> = convergence threshold held constant at a value of 1e-3
+3. Hyperparameter tuning was conducted on the data with optimal model performance using the silhouette score determined for: 
+    * <span style="color: #FF0000">n_components</span> = 2
+    * <span style="color: #FF0000">covariance_type</span> = full
+    * <span style="color: #FF0000">init_params</span> = k-means++
+    * <span style="color: #FF0000">tol</span> = 1e-3
+4. The apparent model performance of the optimal model is summarized as follows:
+    * **Silhouette Score** = 0.2239
+    
 
 
 ```python
@@ -5296,7 +5348,9 @@ gaussian_mixture_cluster_silhouette_score = list()
 for cluster_count in range(2,10):
     gm = GaussianMixture(n_components=cluster_count,
                          init_params='k-means++',
-                        random_state=88888888)
+                         covariance_type='full',
+                         tol = 1e-3,
+                         random_state=88888888)
     gm = gm.fit(cancer_death_rate_premodelling_clustering)
     gaussian_mixture_cluster_list.append(cluster_count)
     gaussian_mixture_cluster_silhouette_score.append(silhouette_score(cancer_death_rate_premodelling_clustering, 
@@ -5575,6 +5629,21 @@ plt.show()
 
 
 ### 1.6.5 Agglomerative Clustering <a class="anchor" id="1.6.5"></a>
+
+[Agglomerative Clustering](https://link.springer.com/book/10.1007/978-981-19-0420-2) builds a hierarchy of clusters. In this algorithm, each data point starts as its own cluster, and the algorithm merges clusters iteratively until a stopping criterion is met. The algorithm starts with each data point as a singleton cluster with the number of initial clusters is equal to the number of data points. The pairwise distance matrix is calculated between all clusters using complete linkage determined as the maximum distance between any two points in the two clusters. The two clusters that have the minimum distance according to the linkage criterion are identified and merged in the next step. The distances between new clusters and all other clusters are recalculated. All previous steps are repeated until the desired number of clusters is reached or until a stopping criterion is met.
+
+[Silhouette Score](https://www.packtpub.com/product/training-systems-using-python-statistical-modeling/9781838823733) assesses the quality of clusters created by a clustering algorithm. It measures how well-separated the clusters are and how similar each data point in a cluster is to the other points in the same cluster compared to the nearest neighboring cluster. The silhouette score ranges from -1 to 1, where a higher value indicates better-defined clusters. The silhouette method requires the computation of the silhouette scores for each data point which is the average dissimilarity of the data point with all other data points in the next-nearest cluster minus the average dissimilarity of the data point to points in the same cluster and divided by the larger of the two numbers. The overall silhouette score for the clustering is the average of the silhouette scores for all data points.
+
+1. The [agglomerative clustering model](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html#sklearn.cluster.AgglomerativeClustering) from the <mark style="background-color: #CCECFF"><b>sklearn.cluster</b></mark> Python library API was implemented. 
+2. The model contains 2 hyperparameters:
+    * <span style="color: #FF0000">n_cluster</span> = number of clusters to find made to vary between 2 to 9
+    * <span style="color: #FF0000">linkage</span> = linkage criterion used to determine which distance to use between sets of observation held constant at a value equal to full (minimizes the maximum distance between observations of pairs of clusters)
+3. Hyperparameter tuning was conducted on the data with optimal model performance using the silhouette score determined for: 
+    * <span style="color: #FF0000">n_cluster</span> = 2
+    * <span style="color: #FF0000">linkage</span> = full
+4. The apparent model performance of the optimal model is summarized as follows:
+    * **Silhouette Score** = 0.1629
+    
 
 
 ```python
@@ -5863,6 +5932,21 @@ plt.show()
 
 ### 1.6.6 Ward Hierarchical Clustering <a class="anchor" id="1.6.6"></a>
 
+[Ward Hierarchical Clustering](https://link.springer.com/book/10.1007/978-981-19-0420-2) creates compact, well-separated clusters by minimizing the variance within each cluster during the merging process. In this algorithm, each data point starts as its own cluster, and the algorithm merges clusters iteratively until a stopping criterion is met. The algorithm starts with each data point as a singleton cluster with the number of initial clusters is equal to the number of data points. The pairwise distance matrix is calculated between all clusters and used as a measure of dissimilarity. For each cluster, the within-cluster variance is computed which evaluates how tightly the data points within a cluster are grouped. The two clusters that, when merged, result in the smallest increase in the within-cluster variance are identified and merged in the next step. The within-cluster variance for the newly formed cluster  are recalculated and the pairwise distance matrix updated. All previous steps are repeated until the desired number of clusters is reached or until a stopping criterion is met.
+
+[Silhouette Score](https://www.packtpub.com/product/training-systems-using-python-statistical-modeling/9781838823733) assesses the quality of clusters created by a clustering algorithm. It measures how well-separated the clusters are and how similar each data point in a cluster is to the other points in the same cluster compared to the nearest neighboring cluster. The silhouette score ranges from -1 to 1, where a higher value indicates better-defined clusters. The silhouette method requires the computation of the silhouette scores for each data point which is the average dissimilarity of the data point with all other data points in the next-nearest cluster minus the average dissimilarity of the data point to points in the same cluster and divided by the larger of the two numbers. The overall silhouette score for the clustering is the average of the silhouette scores for all data points.
+
+1. The [ward hierarchical clustering model](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html#sklearn.cluster.AgglomerativeClustering) from the <mark style="background-color: #CCECFF"><b>sklearn.cluster</b></mark> Python library API was implemented. 
+2. The model contains 2 hyperparameters:
+    * <span style="color: #FF0000">n_cluster</span> = number of clusters to find made to vary between 2 to 9
+    * <span style="color: #FF0000">linkage</span> = linkage criterion used to determine which distance to use between sets of observation held constant at a value equal to ward (minimizes the sum of squared differences and variance within all clusters)
+3. Hyperparameter tuning was conducted on the data with optimal model performance using the silhouette score determined for: 
+    * <span style="color: #FF0000">n_cluster</span> = 2
+    * <span style="color: #FF0000">linkage</span> = ward
+4. The apparent model performance of the optimal model is summarized as follows:
+    * **Silhouette Score** = 0.2148
+    
+
 
 ```python
 ##################################
@@ -6150,6 +6234,30 @@ plt.show()
 
 ## 1.7. Consolidated Findings <a class="anchor" id="1.7"></a>
 
+1. Among the range of cluster counts evaluated, the [k-means clustering model](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html#sklearn.cluster.KMeans) with 2 clusters provided the most compact intra-cluster and differential inter-cluster segmentation of countries:
+    * **Silhouette Score** = 0.2355
+2. Among the range of cluster counts evaluated, the [bisecting k-means clustering model](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.BisectingKMeans.html#sklearn.cluster.BisectingKMeans) with 2 clusters provided the most compact intra-cluster and differential inter-cluster segmentation of countries:
+    * **Silhouette Score** = 0.2355
+3. Among the range of cluster counts evaluated, the [gaussian mixture clustering model](https://scikit-learn.org/stable/modules/generated/sklearn.mixture.GaussianMixture.html#sklearn.mixture.GaussianMixture) with 2 clusters provided the most compact intra-cluster and differential inter-cluster segmentation of countries:
+    * **Silhouette Score** = 0.2239
+4. Among the range of cluster counts evaluated, the [agglomerative clustering model](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html#sklearn.cluster.AgglomerativeClustering) with 2 clusters provided the most compact intra-cluster and differential inter-cluster segmentation of countries:
+    * **Silhouette Score** = 0.1629
+5. Among the range of cluster counts evaluated, the [ward hierarchical clustering model](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html#sklearn.cluster.AgglomerativeClustering) with 2 clusters provided the most compact intra-cluster and differential inter-cluster segmentation of countries:
+    * **Silhouette Score** = 0.2148    
+6. Comparing all results from the clustering models formulated, the [k-means clustering model](https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html#sklearn.cluster.KMeans) which demonstrated the highest silhouette score was selected as the final model for segmenting the countries based on similar characteristics. 
+    * **Silhouette Score** = 0.2355   
+7. Given the final model, the following segmented groupings were observed from the formulated clusters:  
+    * **Cluster 0: HIGH_PAN_LUN_COL_LIV_CAN** composed of countries characterized by:
+        * Higher death rates for pancreatic, lung, colon and liver cancers
+        * Lower death rates for prostate, breast, cervical, stomach and esophageal cancers
+        * Higher smoking prevalence, overweight prevalence and alcohol consumption
+        * Predominantly from North America, Europe, West Asia, Central Asia, East Asia, Southeast Asia and Australia regions
+    * **Cluster 1: HIGH_PRO_BRE_CER_STO_ESO_CAN** composed of countries characterized by:
+        * Higher death rates for prostate, breast, cervical, stomach and esophageal cancers
+        * Lower death rates for pancreatic, lung, colon and liver cancers
+        * Lower smoking prevalence, overweight prevalence and alcohol consumption
+        * Predominantly from the South America, South Asia and Africa regions
+        
 
 
 ```python
@@ -7067,20 +7175,23 @@ A detailed report was formulated documenting all the analysis steps and findings
 * **[Book]** [Data Mining: Practical Machine Learning Tools and Techniques](https://www.sciencedirect.com/book/9780123748560/data-mining-practical-machine-learning-tools-and-techniques?via=ihub=) by Ian Witten, Eibe Frank, Mark Hall and Christopher Pal 
 * **[Book]** [Data Cleaning](https://dl.acm.org/doi/book/10.1145/3310205) by Ihab Ilyas and Xu Chu
 * **[Book]** [Data Wrangling with Python](https://www.oreilly.com/library/view/data-wrangling-with/9781491948804/) by Jacqueline Kazil and Katharine Jarmul
+* **[Book]** [Finding Groups in Data: An Introduction to Cluster Analysis](https://onlinelibrary.wiley.com/doi/book/10.1002/9780470316801) by Leonard Kaufman and Peter Rousseeuw
+* **[Book]** [The Elements of Statistical Learning](https://link.springer.com/book/10.1007/978-0-387-84858-7) by Trevor Hastie, Robert Tibshirani and Jerome Friedman
+* **[Book]** [Training Systems using Python Statistical Modeling](https://www.packtpub.com/product/training-systems-using-python-statistical-modeling/9781838823733) by Curtis Miller
+* **[Book]** [Python Data Science Handbook](https://www.oreilly.com/library/view/python-data-science/9781098121211/) by Jake VanderPlas
+* **[Book]** [Theory of Agglomerative Hierarchical Clustering](https://link.springer.com/book/10.1007/978-981-19-0420-2) by Sadaaki Miyamoto
 * **[Python Library API]** [NumPy](https://numpy.org/doc/) by NumPy Team
 * **[Python Library API]** [pandas](https://pandas.pydata.org/docs/) by Pandas Team
 * **[Python Library API]** [seaborn](https://seaborn.pydata.org/) by Seaborn Team
 * **[Python Library API]** [matplotlib.pyplot](https://matplotlib.org/3.5.3/api/_as_gen/matplotlib.pyplot.html) by MatPlotLib Team
 * **[Python Library API]** [itertools](https://docs.python.org/3/library/itertools.html) by Python Team
 * **[Python Library API]** [operator](https://docs.python.org/3/library/operator.html) by Python Team
-* **[Python Library API]** [sklearn.experimental](https://scikit-learn.org/stable/modules/classes.html#module-sklearn.experimental) by Scikit-Learn Team
-* **[Python Library API]** [sklearn.impute](https://scikit-learn.org/stable/modules/classes.html#module-sklearn.impute) by Scikit-Learn Team
-* **[Python Library API]** [sklearn.linear_model](https://scikit-learn.org/stable/modules/classes.html#module-sklearn.linear_model) by Scikit-Learn Team
 * **[Python Library API]** [sklearn.preprocessing](https://scikit-learn.org/stable/modules/classes.html#module-sklearn.preprocessing) by Scikit-Learn Team
 * **[Python Library API]** [sklearn.metrics](https://scikit-learn.org/stable/modules/model_evaluation.html) by Scikit-Learn Team
-* **[Python Library API]** [sklearn.model_selection](https://scikit-learn.org/stable/model_selection.html) by Scikit-Learn Team
-* **[Python Library API]** [sklearn.pipeline](https://scikit-learn.org/stable/modules/compose.html) by Scikit-Learn Team
+* **[Python Library API]** [sklearn.cluster](https://scikit-learn.org/stable/modules/clustering.html) by Scikit-Learn Team
+* **[Python Library API]** [sklearn.mixture](https://scikit-learn.org/stable/modules/mixture.html) by Scikit-Learn Team
 * **[Python Library API]** [scipy](https://docs.scipy.org/doc/scipy/) by SciPy Team
+* **[Python Library API]** [GeoPandas](https://geopandas.org/en/stable/docs.html) by GeroPandas Team
 * **[Article]** [Step-by-Step Exploratory Data Analysis (EDA) using Python](https://www.analyticsvidhya.com/blog/2022/07/step-by-step-exploratory-data-analysis-eda-using-python/#:~:text=Exploratory%20Data%20Analysis%20(EDA)%20with,distributions%20using%20Python%20programming%20language.) by Malamahadevan Mahadevan (Analytics Vidhya)
 * **[Article]** [Exploratory Data Analysis in Python — A Step-by-Step Process](https://towardsdatascience.com/exploratory-data-analysis-in-python-a-step-by-step-process-d0dfa6bf94ee) by Andrea D'Agostino (Towards Data Science)
 * **[Article]** [Exploratory Data Analysis with Python](https://medium.com/@douglas.rochedo/exploratory-data-analysis-with-python-78b6c1d479cc) by Douglas Rocha (Medium)
@@ -7127,6 +7238,7 @@ A detailed report was formulated documenting all the analysis steps and findings
 * **[Article]** [Practical Implementation Of K-means, Hierarchical, and DBSCAN Clustering On Dataset With Hyperparameter Optimization](https://medium.com/analytics-vidhya/practical-implementation-of-k-means-hierarchical-and-dbscan-clustering-on-dataset-with-bd7f3d13ef7f) by Janibasha Shaik (Towards Data Science)
 * **[Article]** [KMeans Hyper-parameters Explained with Examples](https://towardsdatascience.com/kmeans-hyper-parameters-explained-with-examples-c93505820cd3) by Sujeewa Kumaratunga (Towards Data Science)
 * **[Article]** [KMeans Silhouette Score Python Examples](https://vitalflux.com/kmeans-silhouette-score-explained-with-python-example/#google_vignette) by Ajitesh Kumar (Analytics Yogi)
+* **[Publication]** [A Comparison of Document Clustering Techniques](https://www.semanticscholar.org/paper/A-Comparison-of-Document-Clustering-Techniques-Steinbach-Karypis/9378a3797d5f815babe7b392a199ea9d8d4f1dcf) by Michael Steinbach, George Karypis and Vipin Kumar (Computer Science)
 
 
 
