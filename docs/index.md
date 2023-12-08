@@ -2,7 +2,7 @@
 # Unsupervised Learning : Formulating Segmented Groups Using Clustering Algorithms
 
 ***
-### John Pauline Pineda <br> <br> *December 9, 2023*
+### John Pauline Pineda <br> <br> *December 8, 2023*
 ***
 
 * [**1. Table of Contents**](#TOC)
@@ -11,12 +11,11 @@
     * [1.3 Data Quality Assessment](#1.3)
     * [1.4 Data Preprocessing](#1.4)
         * [1.4.1 Data Cleaning](#1.4.1)
-        * [1.4.2 Missing Data Imputation](#1.4.2)
-        * [1.4.3 Outlier Treatment](#1.4.3)
-        * [1.4.4 Collinearity](#1.4.4)
-        * [1.4.5 Shape Transformation](#1.4.5)
-        * [1.4.6 Centering and Scaling](#1.4.6)
-        * [1.4.7 Preprocessed Data Description](#1.4.7)
+        * [1.4.2 Outlier Treatment](#1.4.2)
+        * [1.4.3 Collinearity](#1.4.3)
+        * [1.4.4 Shape Transformation](#1.4.4)
+        * [1.4.5 Centering and Scaling](#1.4.5)
+        * [1.4.6 Preprocessed Data Description](#1.4.6)
     * [1.5 Data Exploration](#1.5)
         * [1.5.1 Exploratory Data Analysis](#1.5.1)
         * [1.5.2 Hypothesis Testing](#1.5.2)
@@ -35,7 +34,7 @@
 
 # 1. Table of Contents <a class="anchor" id="TOC"></a>
 
-This project explores the various clustering algorithms for segmenting information using various helpful packages in <mark style="background-color: #CCECFF"><b>Python</b></mark>. Models applied in the analysis to cluster high dimensional data included the **K-Means**, **Affinity Propagation**, **Mean Shift**, **Spectral Clustering** and **Agglomerative Clustering** algorithms. The different clustering algorithms were evaluated using the silhouete coefficient which measures how well-separated the clusters are and how similar an object is to its own cluster (cohesion) compared to other clusters (separation). All results were consolidated in a [<span style="color: #FF0000"><b>Summary</b></span>](#Summary) presented at the end of the document.
+This project explores the various clustering algorithms for segmenting information using various helpful packages in <mark style="background-color: #CCECFF"><b>Python</b></mark>. Models applied in the analysis to cluster high dimensional data included the **K-Means**, **Bisecting K-Means**, **Gaussian Mixture**, **Agglomerative** and **Ward Hierarchical** clustering algorithms. The different clustering algorithms were evaluated using the silhouete coefficient which measures how well-separated the clusters are and how similar an object is to its own cluster (cohesion) compared to other clusters (separation). All results were consolidated in a [<span style="color: #FF0000"><b>Summary</b></span>](#Summary) presented at the end of the document.
 
 [Cluster analysis](https://link.springer.com/book/10.1007/978-1-4614-6849-3?page=1) is a form of unsupervised learning method aimed at identifying similar structural patterns in an unlabeled data set by segmenting the observations into clusters with shared characteristics as compared to those in other clusters. The algorithms applied in this study attempt to formulate partitioned segments from the data set through the hierarchical (either agglomeratively when smaller clusters are merged into the larger clusters or divisively when larger clusters are divided into smaller clusters) and non-hierarchical (when each observation is placed in exactly one of the mutually exclusive clusters) methods.
 
@@ -44,10 +43,11 @@ This project explores the various clustering algorithms for segmenting informati
 
 Datasets used for the analysis were separately gathered and consolidated from various sources including: 
 1. Cancer Deaths by Type from [OurWorldInData.Org](https://ourworldindata.org/cancer) as obtained from the [Institute for Health Metrics and Evaluation](http://ghdx.healthdata.org/gbd-results-tool)
-2. Prevalence of Overweight among Adults [OurWorldInData.Org](https://ourworldindata.org/obesity) as obtained from [WHO, Global Health Observatory](https://ghoapi.azureedge.net/api/)
-3. Prevalence of Daily Smoking Among Adults [OurWorldInData.Org](https://ourworldindata.org/smoking) as obtained from [WHO, Global Health Observatory](https://ghoapi.azureedge.net/api/)
-4. Share of Adults Who Drank Alcohol [OurWorldInData.Org](https://ourworldindata.org/alcohol-consumption) as obtained from [WHO, Global Health Observatory](https://ghoapi.azureedge.net/api/)
+2. Prevalence of Overweight among Adults from [OurWorldInData.Org](https://ourworldindata.org/obesity) as obtained from [WHO, Global Health Observatory](https://ghoapi.azureedge.net/api/)
+3. Prevalence of Daily Smoking Among Adults from [OurWorldInData.Org](https://ourworldindata.org/smoking) as obtained from [WHO, Global Health Observatory](https://ghoapi.azureedge.net/api/)
+4. Total Alcohol Consumption from [OurWorldInData.Org](https://ourworldindata.org/alcohol-consumption) as obtained from [WHO, Global Health Observatory](https://ghoapi.azureedge.net/api/)
 5. Geographic Coordinates from [Geodatos](https://www.geodatos.net/en/coordinates/)
+6. Global Map Shape File from [GeoJson-Maps](https://geojson-maps.ash.ms/)
 
 This study hypothesized that various death rates by major cancer types contain inherent patterns and structures within the data, enabling the grouping of similar countries and the differentiation of dissimilar ones.
 
@@ -2658,7 +2658,7 @@ display(cancer_death_rate_cleaned.shape)
     (183, 16)
 
 
-### 1.4.3 Outlier Detection <a class="anchor" id="1.4.3"></a>
+### 1.4.2 Outlier Detection <a class="anchor" id="1.4.2"></a>
 
 1. High number of outliers observed for 2 numeric variables with Outlier.Ratio>0.10 and marginal to high Skewness.
     * <span style="color: #FF0000">ESOCAN</span>: Outlier.Count = 24, Outlier.Ratio = 0.131, Skewness=+2.092
@@ -2976,7 +2976,7 @@ for column in cancer_death_rate_cleaned_numeric:
     
 
 
-### 1.4.4 Collinearity <a class="anchor" id="1.4.4"></a>
+### 1.4.3 Collinearity <a class="anchor" id="1.4.3"></a>
 
 1. Majority of the numeric variables reported moderate to high correlation which were statistically significant.
 2. Among pairwise combinations of numeric variables on cancer death rates, high Pearson.Correlation.Coefficient values were noted for:
@@ -3244,7 +3244,7 @@ display(cancer_death_rate_cleaned_numeric.shape)
     (183, 12)
 
 
-### 1.4.5 Shape Transformation <a class="anchor" id="1.4.5"></a>
+### 1.4.4 Shape Transformation <a class="anchor" id="1.4.4"></a>
 
 1. A Yeo-Johnson transformation was applied to all numeric variables to improve distributional shape.
 2. All variables achieved symmetrical distributions with minimal outliers after transformation.
@@ -3584,7 +3584,7 @@ cancer_death_rate_transformed_numeric
 
 
 
-### 1.4.6 Centering and Scaling <a class="anchor" id="1.4.6"></a>
+### 1.4.5 Centering and Scaling <a class="anchor" id="1.4.5"></a>
 
 1. All numeric variables were transformed using the standardization method to achieve a comparable scale between values.
 
@@ -3693,7 +3693,7 @@ for column in cancer_death_rate_scaled_numeric:
     
 
 
-### 1.4.7 Preprocessed Data Description <a class="anchor" id="1.4.8"></a>
+### 1.4.6 Preprocessed Data Description <a class="anchor" id="1.4.6"></a>
 
 1. The preprocessed dataset is comprised of:
     * **183 rows** (observations)
@@ -6255,7 +6255,7 @@ plt.show()
         * Higher death rates for prostate, breast, cervical, stomach and esophageal cancers
         * Lower death rates for pancreatic, lung, colon and liver cancers
         * Lower smoking prevalence, overweight prevalence and alcohol consumption
-        * Predominantly from the South America, South Asia and Africa regions
+        * Predominantly from South America, South Asia and Africa regions
         
 
 
@@ -6837,8 +6837,7 @@ cancer_death_rate_kmeans_cluster_map.head()
 
 ```python
 ##################################
-# Loading world map shapefile 
-# obtained from https://geojson-maps.ash.ms/
+# Loading the globalmap shape file 
 ##################################
 world = gpd.read_file('custom.geo.json')
 ```
@@ -7310,8 +7309,28 @@ plt.show()
 
 # 2. Summary <a class="anchor" id="Summary"></a>
 
-A detailed report was formulated documenting all the analysis steps and findings.
+A detailed [report](https://github.com/JohnPaulinePineda/Unsupervised-Machine-Learning-Final-Assignment/blob/main/UnsupervisedMachineLearningCapstone_JohnPaulinePineda.pdf) was formulated documenting all the analysis steps and findings.
 
+
+![ClusteringProject_Introduction.png](attachment:fd9a1226-3a2b-47ff-80ec-c8bd94bd336f.png)
+
+![ClusteringProject_Methodology.png](attachment:c8501e4c-ca5e-44d8-8131-670f2fa41e89.png)
+
+![ClusteringProject__DataGathering.png](attachment:98d9a48a-ab54-417a-ba43-4b8019ebdaf1.png)
+
+![ClusteringProject_DataDescription.png](attachment:57c9d34d-303c-4f6a-ae0f-1e1bfc082a5c.png)
+
+![ClusteringProject__DataQualityAssessment.png](attachment:3ca4ac66-c308-480b-b847-c0ade460f4ba.png)
+
+![ClusteringProject__DataPreprocessing.png](attachment:62fc8fc4-80bc-4d39-a298-12403b3159e4.png)
+
+![ClusteringProject__DataExploration.png](attachment:7746f7a7-db93-4d1d-ace9-bf9aae145573.png)
+
+![ClusteringProject_ModelDevelopment.png](attachment:8e7dc398-2f4a-4e34-aab7-a308f0494a2d.png)
+
+![ClusteringProject_OverallFindingsAndImplications.png](attachment:bd345225-7b1d-4870-a5cc-dbb8e5e7af09.png)
+
+![ClusteringProject_OverallConclusion.png](attachment:c2ff7117-0bb2-40be-8285-d2a8f30d33b3.png)
 
 # 3. References <a class="anchor" id="References"></a>
 * **[Book]** [Data Preparation for Machine Learning: Data Cleaning, Feature Selection, and Data Transforms in Python](https://machinelearningmastery.com/data-preparation-for-machine-learning/) by Jason Brownlee
@@ -7336,7 +7355,7 @@ A detailed report was formulated documenting all the analysis steps and findings
 * **[Python Library API]** [sklearn.metrics](https://scikit-learn.org/stable/modules/model_evaluation.html) by Scikit-Learn Team
 * **[Python Library API]** [sklearn.cluster](https://scikit-learn.org/stable/modules/clustering.html) by Scikit-Learn Team
 * **[Python Library API]** [sklearn.mixture](https://scikit-learn.org/stable/modules/mixture.html) by Scikit-Learn Team
-* **[Python Library API]** [scipy](https://docs.scipy.org/doc/scipy/) by SciPy Team
+* **[Python Library API]** [SciPy](https://docs.scipy.org/doc/scipy/) by SciPy Team
 * **[Python Library API]** [GeoPandas](https://geopandas.org/en/stable/docs.html) by GeroPandas Team
 * **[Article]** [Step-by-Step Exploratory Data Analysis (EDA) using Python](https://www.analyticsvidhya.com/blog/2022/07/step-by-step-exploratory-data-analysis-eda-using-python/#:~:text=Exploratory%20Data%20Analysis%20(EDA)%20with,distributions%20using%20Python%20programming%20language.) by Malamahadevan Mahadevan (Analytics Vidhya)
 * **[Article]** [Exploratory Data Analysis in Python — A Step-by-Step Process](https://towardsdatascience.com/exploratory-data-analysis-in-python-a-step-by-step-process-d0dfa6bf94ee) by Andrea D'Agostino (Towards Data Science)
