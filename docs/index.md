@@ -16,8 +16,7 @@
         * [1.4.4 Collinearity](#1.4.4)
         * [1.4.5 Shape Transformation](#1.4.5)
         * [1.4.6 Centering and Scaling](#1.4.6)
-        * [1.4.7 Data Encoding](#1.4.7)
-        * [1.4.8 Preprocessed Data Description](#1.4.8)
+        * [1.4.7 Preprocessed Data Description](#1.4.7)
     * [1.5 Data Exploration](#1.5)
         * [1.5.1 Exploratory Data Analysis](#1.5.1)
         * [1.5.2 Hypothesis Testing](#1.5.2)
@@ -3694,7 +3693,7 @@ for column in cancer_death_rate_scaled_numeric:
     
 
 
-### 1.4.8 Preprocessed Data Description <a class="anchor" id="1.4.8"></a>
+### 1.4.7 Preprocessed Data Description <a class="anchor" id="1.4.8"></a>
 
 1. The preprocessed dataset is comprised of:
     * **183 rows** (observations)
@@ -7159,6 +7158,153 @@ plt.show()
 
     
 ![png](output_215_0.png)
+    
+
+
+
+```python
+##################################
+# Plotting the map by K-Means target
+##################################
+cancer_death_rate_kmeans_target_map = pd.concat([cancer_death_rate_kmeans_clustering_target,cancer_death_rate_filtered_row[['CODE']]], axis=1, join='inner')
+cancer_death_rate_kmeans_target_map.head()
+```
+
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>KMEANS_CLUSTER</th>
+      <th>SMPREV</th>
+      <th>OWPREV</th>
+      <th>ACSHAR</th>
+      <th>CODE</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>HIGH_PRO_BRE_CER_STO_ESO_CAN</td>
+      <td>-0.5405</td>
+      <td>-1.4979</td>
+      <td>-1.6782</td>
+      <td>AFG</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>HIGH_PAN_LUN_COL_LIV_CAN</td>
+      <td>0.5329</td>
+      <td>0.6090</td>
+      <td>0.4008</td>
+      <td>ALB</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>HIGH_PAN_LUN_COL_LIV_CAN</td>
+      <td>-0.6438</td>
+      <td>0.9033</td>
+      <td>-1.3345</td>
+      <td>DZA</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>HIGH_PAN_LUN_COL_LIV_CAN</td>
+      <td>1.1517</td>
+      <td>1.0213</td>
+      <td>1.1371</td>
+      <td>AND</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>HIGH_PRO_BRE_CER_STO_ESO_CAN</td>
+      <td>-1.0431</td>
+      <td>-1.2574</td>
+      <td>0.3520</td>
+      <td>AGO</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+
+```python
+##################################
+# Merging the GeoDataFrame 
+# with world map using country codes
+##################################
+world_target = world.merge(cancer_death_rate_kmeans_target_map, left_on='gu_a3', right_on='CODE', how='left')
+```
+
+
+```python
+##################################
+# Plotting the map by Smoking Prevalence
+##################################
+fig, ax = plt.subplots(1, 1, figsize=(12.5, 7))
+world_target.boundary.plot(ax=ax, linewidth=1) 
+world_target.plot(column='SMPREV', cmap="seismic", legend=True, ax=ax, legend_kwds={'label': "SMPREV"})
+plt.title('SMPREV')
+plt.show()
+```
+
+
+    
+![png](output_218_0.png)
+    
+
+
+
+```python
+##################################
+# Plotting the map by Overweight Prevalence
+##################################
+fig, ax = plt.subplots(1, 1, figsize=(12.5, 7))
+world_target.boundary.plot(ax=ax, linewidth=1) 
+world_target.plot(column='OWPREV', cmap="seismic", legend=True, ax=ax, legend_kwds={'label': "OWPREV"})
+plt.title('OWPREV')
+plt.show()
+```
+
+
+    
+![png](output_219_0.png)
+    
+
+
+
+```python
+##################################
+# Plotting the map by Alcohol Consumption
+##################################
+fig, ax = plt.subplots(1, 1, figsize=(12.5, 7))
+world_target.boundary.plot(ax=ax, linewidth=1) 
+world_target.plot(column='ACSHAR', cmap="seismic", legend=True, ax=ax, legend_kwds={'label': "ACSHAR"})
+plt.title('ACSHAR')
+plt.show()
+```
+
+
+    
+![png](output_220_0.png)
     
 
 
